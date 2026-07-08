@@ -38,13 +38,16 @@ services:
         condition: service_healthy
 
 
-  backend:
+ backend:
     build:
       context: ./backend
 
     container_name: argos-backend
 
     restart: unless-stopped
+
+    env_file:
+      - .env
 
     ports:
       - "8000:8000"

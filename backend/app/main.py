@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 
+from app.database.database import engine
+from sqlalchemy import text
+
 app = FastAPI(
     title="ARGOS API",
     version="0.1.0",
@@ -20,4 +23,16 @@ def root():
 def health():
     return {
         "status": "ok"
+    }
+
+
+@app.get("/db-test")
+def db_test():
+    with engine.connect() as connection:
+        result = connection.execute(text("SELECT version();"))
+        version = result.scalar()
+
+    return {
+        "database": "connected",
+        "version": version
     }
