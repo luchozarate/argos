@@ -9,7 +9,8 @@ app = FastAPI(
     title="ARGOS API",
     version="0.1.0",
     description="Asistente financiero inteligente"
-)
+    )
+
 app.include_router(user_router)
 Base.metadata.create_all(bind=engine)
 
