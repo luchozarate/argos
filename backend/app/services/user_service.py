@@ -16,7 +16,7 @@ class UserService:
     name: str,
     email: str,
     password: str,
-):
+    )
 
     existing = self.repository.get_by_email(
         db=db,
