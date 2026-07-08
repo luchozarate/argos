@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from sqlalchemy import text
+from app.database.database import engine
 
 from app.database.database import engine
 from sqlalchemy import text
@@ -29,8 +31,7 @@ def health():
 @app.get("/db-test")
 def db_test():
     with engine.connect() as connection:
-        result = connection.execute(text("SELECT version();"))
-        version = result.scalar()
+        version = connection.execute(text("SELECT version();")).scalar()
 
     return {
         "database": "connected",
