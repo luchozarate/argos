@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 from sqlalchemy import text
-from app.database.database import engine
-
-from app.database.database import engine
+from app.database.database import Base, engine
+from app.models.user import User
 from sqlalchemy import text
 
 app = FastAPI(
@@ -11,6 +10,7 @@ app = FastAPI(
     description="Asistente financiero inteligente"
 )
 
+Base.metadata.create_all(bind=engine)
 
 @app.get("/")
 def root():
