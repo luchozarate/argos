@@ -29,7 +29,7 @@ class UserRepository:
     self,
     db: Session,
     email: str,
-):
+    ):
 
     return (
         db.query(User)
