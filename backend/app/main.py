@@ -3,13 +3,14 @@ from sqlalchemy import text
 from app.database.database import Base, engine
 from app.models.user import User
 from sqlalchemy import text
+from app.api.user_api import router as user_router
 
 app = FastAPI(
     title="ARGOS API",
     version="0.1.0",
     description="Asistente financiero inteligente"
 )
-
+app.include_router(user_router)
 Base.metadata.create_all(bind=engine)
 
 @app.get("/")
