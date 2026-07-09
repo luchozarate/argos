@@ -6,6 +6,7 @@ from app.api.user_api import router as user_router
 from app.database.database import Base, engine
 from app.models.user import User
 from app.models.workspace import Workspace
+from app.models.workspace_member import WorkspaceMember
 
 app = FastAPI(
     title="ARGOS API",
