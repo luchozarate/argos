@@ -1,10 +1,22 @@
-from dotenv import load_dotenv
-import os
+from pydantic_settings import BaseSettings
 
-load_dotenv()
 
-POSTGRES_DB = os.getenv("POSTGRES_DB")
-POSTGRES_USER = os.getenv("POSTGRES_USER")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-POSTGRES_HOST = os.getenv("POSTGRES_HOST")
-POSTGRES_PORT = os.getenv("POSTGRES_PORT")
+class Settings(BaseSettings):
+
+    APP_NAME: str = "ARGOS"
+
+    APP_VERSION: str = "0.1.0"
+
+    DATABASE_URL: str
+
+    SECRET_KEY: str
+
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+
+    ALGORITHM: str = "HS256"
+
+    class Config:
+        env_file = ".env"
+
+
+settings = Settings()
