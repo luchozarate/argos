@@ -7,6 +7,7 @@ from app.database.database import Base, engine
 from app.models.user import User
 from app.models.workspace import Workspace
 from app.models.workspace_member import WorkspaceMember
+from app.models.expense import Expense
 
 app = FastAPI(
     title="ARGOS API",
