@@ -34,3 +34,14 @@ class UserRepository:
             .filter(User.email == email)
             .first()
         )
+    def authenticate(
+    self,
+    db: Session,
+    email: str,
+    ):
+
+    return (
+        db.query(User)
+        .filter(User.email == email)
+        .first()
+    )
