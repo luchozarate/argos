@@ -8,89 +8,179 @@
 </head>
 <body class="bg-gray-900 text-white font-sans antialiased min-h-screen flex flex-col justify-between">
 
-    <header class="p-4 border-b border-gray-800 bg-gray-950 flex justify-between items-center">
-        <h1 class="text-xl font-bold tracking-wider text-cyan-400">ARGOS 🤖</h1>
-        <span class="text-xs bg-cyan-900/50 text-cyan-300 px-2 py-1 rounded-full border border-cyan-700/50">Workspace: Personal</span>
-    </header>
-
-    <main class="flex-1 p-4 max-w-md mx-auto w-full flex flex-col gap-4 overflow-y-auto">
-        
-        <div class="bg-gray-850 p-4 rounded-2xl border border-gray-800 shadow-xl">
-            <label class="block text-sm font-medium text-gray-400 mb-2">¿Qué gastaste hoy?</label>
-            <textarea id="ai-input" rows="3" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:outline-none focus:border-cyan-500 text-white placeholder-gray-500 resize-none text-base" placeholder="Ej: compre carnes, gaste 30 lucas..."></textarea>
+    <div id="login-screen" class="flex-1 flex flex-col justify-center items-center p-6 max-w-sm mx-auto w-full">
+        <div class="w-full bg-gray-950 p-6 rounded-2xl border border-gray-800 shadow-2xl text-center">
+            <h1 class="text-3xl font-extrabold tracking-wider text-cyan-400 mb-2">ARGOS 🤖</h1>
+            <p class="text-gray-400 text-sm mb-6">Ingresá a tu copiloto financiero</p>
             
-            <button id="btn-send" class="w-full mt-3 bg-cyan-500 hover:bg-cyan-600 text-gray-950 font-bold py-3 px-4 rounded-xl transition duration-200 flex justify-center items-center gap-2 text-base cursor-pointer">
-                <span>Procesar Gasto con IA</span>
-            </button>
-        </div>
+            <div id="login-error" class="hidden mb-4 p-3 bg-red-900/30 border border-red-700 text-red-400 text-xs rounded-xl"></div>
 
-        <div id="status-box" class="hidden p-3 rounded-xl text-sm border"></div>
-
-        <div class="flex-1">
-            <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Gastos Recientes</h2>
-            <div id="expenses-list" class="flex flex-col gap-2">
-                <p class="text-gray-500 text-sm italic text-center py-4">No hay gastos registrados en este workspace.</p>
+            <div class="flex flex-col gap-4 text-left">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Email</label>
+                    <input type="email" id="login-email" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:outline-none focus:border-cyan-500 text-white text-sm" placeholder="tu@email.com">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Contraseña</label>
+                    <input type="password" id="login-password" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:outline-none focus:border-cyan-500 text-white text-sm" placeholder="••••••••">
+                </div>
+                <button id="btn-login" class="w-full mt-2 bg-cyan-500 hover:bg-cyan-600 text-gray-950 font-bold py-3 px-4 rounded-xl transition duration-200 text-sm cursor-pointer">
+                    Iniciar Sesión
+                </button>
             </div>
         </div>
-    </main>
+    </div>
+
+    <div id="app-screen" class="hidden flex-1 flex flex-col justify-between">
+        <header class="p-4 border-b border-gray-800 bg-gray-950 flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-wider text-cyan-400">ARGOS 🤖</h1>
+            <div class="flex items-center gap-3">
+                <span class="text-[11px] bg-cyan-900/50 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-700/50">Personal</span>
+                <button id="btn-logout" class="text-xs text-gray-400 hover:text-red-400 cursor-pointer">Salir</button>
+            </div>
+        </header>
+
+        <main class="flex-1 p-4 max-w-md mx-auto w-full flex flex-col gap-4 overflow-y-auto">
+            <div class="bg-gray-850 p-4 rounded-2xl border border-gray-800 shadow-xl">
+                <label class="block text-sm font-medium text-gray-400 mb-2">¿Qué gastaste hoy?</label>
+                <textarea id="ai-input" rows="3" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:outline-none focus:border-cyan-500 text-white placeholder-gray-500 resize-none text-base" placeholder="Ej: compre carnes, gaste 30 lucas..."></textarea>
+                <button id="btn-send" class="w-full mt-3 bg-cyan-500 hover:bg-cyan-600 text-gray-950 font-bold py-3 px-4 rounded-xl transition duration-200 flex justify-center items-center gap-2 text-base cursor-pointer">
+                    <span>Procesar Gasto con IA</span>
+                </button>
+            </div>
+
+            <div id="status-box" class="hidden p-3 rounded-xl text-sm border"></div>
+
+            <div class="flex-1">
+                <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Gastos Recientes</h2>
+                <div id="expenses-list" class="flex flex-col gap-2">
+                    <p class="text-gray-500 text-sm italic text-center py-4">No hay gastos registrados.</p>
+                </div>
+            </div>
+        </main>
+    </div>
 
     <script>
-        const API_BASE = ""; // Al estar en el mismo servidor, usa ruta relativa
-        const WORKSPACE_ID = 1; // Por ahora hardcodeado para tu test inicial
+        const API_BASE = ""; 
+        const WORKSPACE_ID = 1; // Ajustar dinámicamente si es necesario luego
 
+        // Elementos DOM
+        const loginScreen = document.getElementById('login-screen');
+        const appScreen = document.getElementById('app-screen');
+        const btnLogin = document.getElementById('btn-login');
+        const btnLogout = document.getElementById('btn-logout');
+        const loginError = document.getElementById('login-error');
         const btnSend = document.getElementById('btn-send');
         const aiInput = document.getElementById('ai-input');
         const statusBox = document.getElementById('status-box');
         const expensesList = document.getElementById('expenses-list');
 
-        // Función para mostrar mensajes de estado
-        function showStatus(text, type) {
-            statusBox.classList.remove('hidden', 'bg-green-900/30', 'border-green-700', 'text-green-400', 'bg-red-900/30', 'border-red-700', 'text-red-400', 'bg-cyan-900/30', 'border-cyan-700', 'text-cyan-400');
-            if (type === 'loading') {
-                statusBox.className = "p-3 rounded-xl text-sm border bg-cyan-900/30 border-cyan-700 text-cyan-400";
-            } else if (type === 'success') {
-                statusBox.className = "p-3 rounded-xl text-sm border bg-green-900/30 border-green-700 text-green-400";
+        // Chequear sesión al cargar la web
+        function checkAuth() {
+            const token = localStorage.getItem('argos_token');
+            if (token) {
+                loginScreen.classList.add('hidden');
+                appScreen.classList.remove('hidden');
+                loadExpenses();
             } else {
-                statusBox.className = "p-3 rounded-xl text-sm border bg-red-900/30 border-red-700 text-red-400";
+                loginScreen.classList.remove('hidden');
+                appScreen.classList.add('hidden');
             }
-            statusBox.innerText = text;
         }
 
-        // Registrar gasto con la IA
+        // Manejar Login contra tu /auth/login (que usa x-www-form-urlencoded)
+        btnLogin.addEventListener('click', async () => {
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+
+            if (!email || !password) return;
+            loginError.classList.add('hidden');
+
+            try {
+                // El endpoint /auth/login usa OAuth2PasswordRequestForm (form data)
+                const formData = new URLSearchParams();
+                formData.append('username', email); // FastAPI espera 'username'
+                formData.append('password', password);
+
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('argos_token', data.access_token);
+                    checkAuth();
+                } else {
+                    const err = await response.json();
+                    loginError.innerText = `Error: ${err.detail || 'Credenciales inválidas'}`;
+                    loginError.classList.remove('hidden');
+                }
+            } catch (e) {
+                loginError.innerText = "❌ Error de conexión con el VPS";
+                loginError.classList.remove('hidden');
+            }
+        });
+
+        // Manejar Logout
+        btnLogout.addEventListener('click', () => {
+            localStorage.removeItem('argos_token');
+            checkAuth();
+        });
+
+        // Mostrar estados
+        function showStatus(text, type) {
+            statusBox.className = "p-3 rounded-xl text-sm border " + 
+                (type === 'loading' ? "bg-cyan-900/30 border-cyan-700 text-cyan-400" : 
+                 type === 'success' ? "bg-green-900/30 border-green-700 text-green-400" : 
+                                      "bg-red-900/30 border-red-700 text-red-400");
+            statusBox.innerText = text;
+            statusBox.classList.remove('hidden');
+        }
+
+        // Enviar gasto con IA pasando el Token en los Headers
         btnSend.addEventListener('click', async () => {
             const text = aiInput.value.trim();
             if (!text) return;
 
+            const token = localStorage.getItem('argos_token');
             btnSend.disabled = true;
-            showStatus("ARGOS está interpretando tu gasto... 🧠", "loading");
+            showStatus("ARGOS interpretando gasto... 🧠", "loading");
 
             try {
                 const response = await fetch(`${API_BASE}/ai/process-text?workspace_id=${WORKSPACE_ID}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` // <-- AQUÍ VIAJA TU TOKEN JWT
+                    },
                     body: JSON.stringify({ text: text })
                 });
 
                 if (response.ok) {
                     const data = await response.json();
-                    showStatus(`✅ Guardado: ${data.description} por $${data.amount}`, "success");
+                    showStatus(`✅ Registrado: ${data.description} por $${data.amount}`, "success");
                     aiInput.value = "";
-                    loadExpenses(); // Recargar la lista
+                    loadExpenses();
                 } else {
                     const err = await response.json();
-                    showStatus(`❌ Error: ${err.detail || 'No se pudo procesar'}`, "error");
+                    showStatus(`❌ Error: ${err.detail || 'No autorizado'}`, "error");
                 }
             } catch (e) {
-                showStatus("❌ Error de conexión con el servidor", "error");
+                showStatus("❌ Error de comunicación", "error");
             } finally {
                 btnSend.disabled = false;
             }
         });
 
-        // Cargar los gastos del Workspace
+        // Cargar gastos pasando el Token
         async function loadExpenses() {
+            const token = localStorage.getItem('argos_token');
             try {
-                const response = await fetch(`${API_BASE}/expenses/workspace/${WORKSPACE_ID}`);
+                const response = await fetch(`${API_BASE}/expenses/workspace/${WORKSPACE_ID}`, {
+                    headers: { 'Authorization': `Bearer ${token}` } // <-- AQUÍ TAMBIÉN
+                });
                 if (response.ok) {
                     const expenses = await response.json();
                     if (expenses.length === 0) return;
@@ -98,12 +188,12 @@
                     expensesList.innerHTML = expenses.reverse().slice(0, 5).map(exp => `
                         <div class="bg-gray-850 p-3 rounded-xl border border-gray-800 flex justify-between items-center">
                             <div>
-                                <p class="font-medium text-white">${exp.description}</p>
-                                <span class="text-xs text-gray-400 bg-gray-800 px-2 py-0.5 rounded-full">${exp.category}</span>
+                                <p class="font-medium text-white text-sm">${exp.description}</p>
+                                <span class="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded-full">${exp.category}</span>
                             </div>
                             <div class="text-right">
-                                <p class="font-bold text-cyan-400">$${parseFloat(exp.amount).toLocaleString('es-AR')}</p>
-                                <p class="text-[10px] text-gray-500">${exp.expense_date}</p>
+                                <p class="font-bold text-cyan-400 text-sm">$${parseFloat(exp.amount).toLocaleString('es-AR')}</p>
+                                <p class="text-[9px] text-gray-500">${exp.expense_date}</p>
                             </div>
                         </div>
                     `).join('');
@@ -113,8 +203,8 @@
             }
         }
 
-        // Carga inicial al abrir la página
-        loadExpenses();
+        // Ejecutar chequeo inicial
+        checkAuth();
     </script>
 </body>
 </html>
