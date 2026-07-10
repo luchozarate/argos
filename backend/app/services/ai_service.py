@@ -47,7 +47,7 @@ class AIService:
         try:
             # Usamos 'gemini-2.0-flash' (o 'gemini-2.5-flash-2026' según corresponda hoy), que es el modelo veloz disponible
             response = self.client.models.generate_content(
-                model='gemini-2.0-flash', 
+                model='gemini-2.5-flash-lite', 
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json"
