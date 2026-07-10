@@ -8,6 +8,7 @@ from app.models.user import User
 from app.models.workspace import Workspace
 from app.models.workspace_member import WorkspaceMember
 from app.models.expense import Expense
+from app.api.ai_api import router as ai_router
 
 app = FastAPI(
     title="ARGOS API",
@@ -20,6 +21,7 @@ Base.metadata.create_all(bind=engine)
 app.include_router(user_router)
 app.include_router(auth_router)
 app.include_router(expense_router)
+app.include_router(ai_router)
 
 
 @app.get("/")

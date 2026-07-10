@@ -12,3 +12,5 @@ pydantic-settings==2.10.1
 
 python-jose[cryptography]==3.5.0
 python-multipart==0.0.20
+
+google-genai==0.1.1
