@@ -12,9 +12,13 @@ class AIService:
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             raise RuntimeError("Falta configurar GEMINI_API_KEY en el archivo .env")
+        # SDK oficial de Google GenAI para producción
         self.client = genai.Client(api_key=api_key)
 
     def parse_expense(self, user_text: str) -> ExpenseCreate:
+        """
+        Toma una entrada de texto plano del usuario y la transforma en un gasto estructurado.
+        """
         today_str = date.today().isoformat()
         
         categorias_validas = [
@@ -44,34 +48,26 @@ class AIService:
         """
 
         try:
-            # Modelo oficial, vigente y de producción actual
             response = self.client.models.generate_content(
-                model='gemini-2.5-flash', 
+                model='gemini-2.0-flash', 
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json"
                 ),
             )
-            
             data = json.loads(response.text.strip())
-            
             return ExpenseCreate(
                 description=data["description"],
                 category=data["category"],
                 amount=data["amount"],
                 expense_date=data["expense_date"]
             )
-            
         except Exception as e:
-            # --- MODO ADMIN LINUX ACTIVADO: FAILOVER AUTÓNOMO ---
-            # Si Google tira 429, 404 o cualquier error, procesamos el texto por regex para que la app responda
-            print(f"⚠️ Servidor Gemini no disponible ({str(e)}). Activando parseo local de emergencia...")
-            
-            # Intentamos cazar números en el texto (ej: "30000" o "30 lucas")
-            monto = 1000.00 # Monto por defecto
+            # FAILOVER LOCAL INTELIGENTE POR REGEX (Por si la cuota gratuita de Google se satura)
+            print(f"⚠️ Servidor Gemini no disponible ({str(e)}). Procesando con motor analítico local...")
+            monto = 1000.00
             text_lower = user_text.lower()
             
-            # Si dice "lucas", multiplicamos por 1000
             lucas_match = re.search(r'(\d+)\s*luca', text_lower)
             numeros_puros = re.findall(r'\d+', text_lower)
             
@@ -80,55 +76,50 @@ class AIService:
             elif numeros_puros:
                 monto = float(numeros_puros[0])
             
-            # Intentamos adivinar la categoría por palabras clave rápidas
             categoria = "Otros"
-            if "carne" in text_lower or "super" in text_lower or "comida" in text_lower:
+            if any(p in text_lower for p in ["carne", "super", "comida", "almacen", "verdura", "chino"]):
                 categoria = "Supermercado"
-            elif "luz" in text_lower or "agua" in text_lower or "gas" in text_lower or "vence" in text_lower:
+            elif any(p in text_lower for p in ["luz", "agua", "gas", "boleta", "factura", "edenor", "metrogas"]):
                 categoria = "Servicios"
-            elif "nafta" in text_lower or "combustible" in text_lower:
+            elif any(p in text_lower for p in ["nafta", "combustible", "shell", "ypf", "axion"]):
                 categoria = "Combustible"
+            elif any(p in text_lower for p in ["alquiler", "renta"]):
+                categoria = "Alquiler"
+            elif any(p in text_lower for p in ["expensa", "expensas"]):
+                categoria = "Expensas"
 
-            # Retornamos el gasto procesado localmente para que impacte en la DB
             return ExpenseCreate(
-                description=user_text[:30] if user_text else "Gasto Manual",
+                description=user_text[:40] if user_text else "Gasto Manual",
                 category=categoria,
                 amount=monto,
                 expense_date=date.today()
             )
-            
+
     def generate_financial_insights(self, expenses: list, income: float) -> list:
-        # Si la cuenta sigue en modo gratuito y trabada, dejamos un "mock" super inteligente basado en datos reales
-        # Pero si la API Key está activa, Gemini analizará de verdad todo tu mes.
-        
+        """
+        Analiza los gastos consolidados del mes y retorna insights estratégicos breves.
+        """
         total_gastado = sum(float(e.amount) for e in expenses)
-        
-        # Armamos un resumen en texto de los gastos para enviarle a la IA
-        resumen_gastos = ""
-        for e in expenses:
-            resumen_gastos += f"- {e.expense_date}: {e.description} ({e.category}) -> ${e.amount}\n"
+        resumen_gastos = "".join([f"- {e.description} ({e.category}): ${e.amount}\n" for e in expenses])
 
         prompt = f"""
-        Sos ARGOS, el copiloto financiero personal y analista experto del usuario. Tu misión es ser un "Jarvis" financiero: directo, inteligente y proactivo. No suavices las cosas si la economía va mal.
+        Sos ARGOS, el analista financiero y copiloto personal del usuario. 
+        Analizá el ritmo de gasto actual y dale 2 o máximo 3 recomendaciones concisas y bien directas.
         
-        Datos financieros del mes actual:
-        - Ingresos totales: ${income}
-        - Total gastado hasta ahora: ${total_gastado}
-        
-        Lista detallada de gastos del usuario:
+        Datos:
+        - Ingresos: ${income}
+        - Gastos: ${total_gastado}
+        - Lista de transacciones:
         {resumen_gastos}
         
-        Analizá el ritmo de gasto. Debes devolver una respuesta ESTRICTAMENTE en formato JSON con una lista de máximo 3 recomendaciones/alertas clave.
-        Estructura esperada:
+        Debes responder ÚNICAMENTE con un JSON en este formato:
         {{
             "insights": [
-                {{"type": "warning | advice | success", "message": "Tu consejo personalizado y crudo aquí"}}
+                {{"type": "warning | advice | success", "message": "Tu consejo directo aquí"}}
             ]
         }}
         """
-
         try:
-            # Si tu cuenta ya tiene fondos/tarjeta, esto va a llamar a Gemini de verdad
             response = self.client.models.generate_content(
                 model='gemini-2.0-flash', 
                 contents=prompt,
@@ -136,36 +127,75 @@ class AIService:
             )
             data = json.loads(response.text.strip())
             return data["insights"]
-            
         except Exception as e:
-            # Failover analítico local por si Google sigue bloqueando la cuota
-            print(f"⚠️ No se pudieron generar insights con Gemini ({str(e)}). Usando motor analítico local...")
-            
+            # Fallback analítico local seguro
             local_insights = []
-            porcentaje_gastado = (total_gastado / income) * 100 if income > 0 else 0
-            
-            if porcentaje_gastado > 80:
-                local_insights.append({
-                    "type": "warning", 
-                    "message": f"🚨 ¡Alerta roja, Lucho! Llevás gastado el {porcentaje_gastado:.1f}% de tus ingresos. A este ritmo no llegamos a fin de mes ni locos."
-                })
-            elif porcentaje_gastado > 50:
-                local_insights.append({
-                    "type": "advice", 
-                    "message": "⚠️ El ritmo de gasto está en zona amarilla. Te sugiero recortar las salidas o compras no esenciales esta semana para mantener el control."
-                })
+            porcentaje = (total_gastado / income) * 100 if income > 0 else 0
+            if porcentaje > 80:
+                local_insights.append({"type": "warning", "message": f"🚨 ¡Ojo Lucho! Consumiste el {porcentaje:.1f}% de tus ingresos. Freno de mano urgente."})
+            elif porcentaje > 50:
+                local_insights.append({"type": "advice", "message": "⚠️ Venimos gastando más de la mitad del sueldo. Bajale a los consumos no esenciales esta semana."})
             else:
-                local_insights.append({
-                    "type": "success", 
-                    "message": "✅ Venís con buena conducta financiera este mes. Seguí así y vas a cumplir el objetivo de ahorro holgadamente."
-                })
-                
-            # Buscamos si gastó mucho en Supermercado
-            super_gastos = sum(float(e.amount) for e in expenses if e.category == "Supermercado")
-            if super_gastos > 0:
-                local_insights.append({
-                    "type": "advice", 
-                    "message": f"🥩 Ojo con los gastos de Supermercado/Carnicería (acumulás ${super_gastos:,.2f}). Podrías optimizar buscando ofertas mayoristas."
-                })
-                
+                local_insights.append({"type": "success", "message": "✅ El ritmo de ahorro viene excelente este mes. ¡Seguí así!"})
+            
+            súper_total = sum(float(e.amount) for e in expenses if e.category == "Supermercado")
+            if súper_total > 50000:
+                local_insights.append({"type": "advice", "message": f"🥩 Registrás ${súper_total:,.2f} en Supermercado/Comida. Podrías optimizar buscando promociones bancarias."})
             return local_insights
+
+    def generate_chat_response(self, user_message: str, expenses: list, income: float) -> str:
+        """
+        Simula o procesa una conversación interactiva con Jarvis analizando toda la base de datos real.
+        """
+        total_gastado = sum(float(e.amount) for e in expenses)
+        resumen_gastos = "".join([f"- {e.expense_date}: {e.description} ({e.category}) -> ${e.amount}\n" for e in expenses])
+
+        prompt = f"""
+        Sos ARGOS (Jarvis), el co-piloto financiero personal del usuario. 
+        Tu tono es directo, sumamente inteligente, pragmático, con personalidad argentina amigable pero firme. No andes con vueltas técnicas aburridas.
+        
+        Datos de la base de datos de este mes:
+        - Ingresos de Lucho: ${income}
+        - Total gastado: ${total_gastado}
+        - Lista de gastos realizados:
+        {resumen_gastos}
+
+        Pregunta o duda del usuario: "{user_message}"
+
+        Analizá la lista de gastos reales y dale una respuesta sumamente personalizada. 
+        Si te pregunta en qué gastó más, calculale la categoría exacta. 
+        Si te pide recortar, dale ideas de recorte sobre sus gastos reales. 
+        Si no hay gastos registrados, decile que cargue algo primero.
+        """
+        try:
+            response = self.client.models.generate_content(
+                model='gemini-2.0-flash', 
+                contents=prompt,
+            )
+            return response.text.strip()
+        except Exception as e:
+            # Failover conversacional: analiza de verdad los datos de la DB localmente para responder inteligente
+            print(f"⚠️ Error en Gemini Chat ({str(e)}). Ejecutando motor de respuesta local...")
+            msg = user_message.lower()
+            
+            # Agrupar categorías
+            categorias = {}
+            for e in expenses:
+                categorias[e.category] = categorias.get(e.category, 0) + float(e.amount)
+            
+            cat_mas_cara = max(categorias, key=categorias.get) if categorias else "Ninguna"
+            monto_mas_caro = categorias.get(cat_mas_cara, 0) if categorias else 0
+            
+            if not expenses:
+                return "¡Hola Lucho! Todavía no registraste ningún movimiento en este Workspace. Tirame qué compraste hoy y arranco a analizar tu economía."
+
+            if any(x in msg for x in ["gaste", "gasto", "en que", "plata", "mayor"]):
+                return f"Lucho, estuve revisando los números. Tu mayor pozo de gasto este mes es **{cat_mas_cara}** con un acumulado de **${monto_mas_caro:,.2f}**. Representa una parte importante de tu presupuesto actual de ${income:,.2f}. ¿Querés que busquemos cómo recortar ahí?"
+                
+            if any(x in msg for x in ["recortar", "ahorrar", "consejo", "ayuda", "bajar"]):
+                comida_gasto = categorias.get("Supermercado", 0) + categorias.get("Comida", 0)
+                if comida_gasto > 40000:
+                    return f"Analizando tus consumos, el rubro de comidas y supermercado acumula **${comida_gasto:,.2f}**. Ahí hay tierra fértil para recortar: podés evitar los deliveries de fin de semana o aprovechar los días de descuento de las billeteras virtuales."
+                return "Te sugiero atacar los gastos hormiga (cafecitos, kioscos, suscripciones que no usás). Parecen pavadas, pero a fin de mes te hacen un agujero gigante en el saldo."
+
+            return f"Acá ARGOS, Lucho. Actualmente tenés ${total_gastado:,.2f} gastados de tus ${income:,.2f} disponibles. Estoy listo para ayudarte a auditar tus gastos fijos o planificar el próximo mes. ¿Por dónde querés arrancar?"

@@ -4,14 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ARGOS - Copiloto Financiero</title>
+    <!-- Tailwind CSS para diseño moderno -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Chart.js para gráficos espectaculares -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-900 text-white font-sans antialiased min-h-screen flex flex-col justify-between">
 
+    <!-- 1. PANTALLA DE LOGIN -->
     <div id="login-screen" class="flex-1 flex flex-col justify-center items-center p-6 max-w-sm mx-auto w-full">
-        <div class="w-full bg-gray-950 p-6 rounded-2xl border border-gray-800 shadow-2xl text-center">
-            <h1 class="text-3xl font-extrabold tracking-wider text-cyan-400 mb-2">ARGOS 🤖</h1>
-            <p class="text-gray-400 text-sm mb-6">Ingresá a tu copiloto financiero</p>
+        <div class="w-full bg-gray-950 p-6 rounded-3xl border border-gray-800 shadow-2xl text-center">
+            <h1 class="text-4xl font-black tracking-wider text-cyan-400 mb-2">ARGOS 🤖</h1>
+            <p class="text-gray-400 text-sm mb-6">Tu co-piloto financiero personal</p>
             
             <div id="login-error" class="hidden mb-4 p-3 bg-red-900/30 border border-red-700 text-red-400 text-xs rounded-xl"></div>
 
@@ -24,76 +28,140 @@
                     <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Contraseña</label>
                     <input type="password" id="login-password" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:outline-none focus:border-cyan-500 text-white text-sm" placeholder="••••••••">
                 </div>
-                <button id="btn-login" class="w-full mt-2 bg-cyan-500 hover:bg-cyan-600 text-gray-950 font-bold py-3 px-4 rounded-xl transition duration-200 text-sm cursor-pointer">
+                <button id="btn-login" class="w-full mt-2 bg-cyan-500 hover:bg-cyan-600 text-gray-950 font-bold py-3.5 px-4 rounded-xl transition duration-200 text-sm cursor-pointer shadow-lg shadow-cyan-500/20">
                     Iniciar Sesión
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="app-screen" class="hidden flex-1 flex flex-col justify-between">
-        <header class="p-4 border-b border-gray-800 bg-gray-950 flex justify-between items-center">
+    <!-- 2. PANTALLA PRINCIPAL DE LA APP -->
+    <div id="app-screen" class="hidden flex-1 flex flex-col h-screen overflow-hidden">
+        
+        <!-- Header Fijo Superior -->
+        <header class="p-4 border-b border-gray-800 bg-gray-950 flex justify-between items-center shrink-0 z-10">
             <h1 class="text-xl font-bold tracking-wider text-cyan-400">ARGOS 🤖</h1>
             <div class="flex items-center gap-3">
-                <span id="workspace-badge" class="text-[11px] bg-cyan-900/50 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-700/50">Personal</span>
+                <span id="workspace-badge" class="text-[11px] bg-cyan-900/40 text-cyan-300 px-2.5 py-0.5 rounded-full border border-cyan-700/50 font-medium">Personal</span>
                 <button id="btn-logout" class="text-xs text-gray-400 hover:text-red-400 cursor-pointer">Salir</button>
             </div>
         </header>
 
-        <main class="flex-1 p-4 max-w-md mx-auto w-full flex flex-col gap-5 overflow-y-auto">
+        <!-- Contenedor Principal con Scroll Independiente -->
+        <main class="flex-1 overflow-y-auto p-4 max-w-md mx-auto w-full pb-24">
             
-            <div>
-                <h2 class="text-xl font-bold text-white">Buenos días, Lucho 👋</h2>
-                <p class="text-xs text-gray-400">Estado de tu Workspace</p>
-                
-                <div class="mt-3 bg-gradient-to-br from-cyan-600 to-blue-800 p-5 rounded-2xl shadow-lg border border-cyan-500/30">
-                    <p class="text-xs text-cyan-200 uppercase font-semibold tracking-wider">Saldo Disponible</p>
-                    <p id="dash-saldo" class="text-3xl font-black mt-1">$ 1.250.000</p>
+            <!-- SECCIÓN 1: DASHBOARD (Pestaña por defecto) -->
+            <div id="tab-dashboard" class="tab-content flex flex-col gap-5">
+                <div>
+                    <h2 class="text-xl font-bold text-white">Hola, Lucho 👋</h2>
+                    <p class="text-xs text-gray-400">Auditoría financiera inteligente</p>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 mt-3">
-                    <div class="bg-gray-850 p-3 rounded-xl border border-gray-800">
-                        <p class="text-[10px] text-gray-400 uppercase font-medium">Gastos del Mes</p>
-                        <p id="dash-gastos" class="text-lg font-bold text-red-400">$ 0.00</p>
+                <!-- Tarjeta Principal: Saldo Disponible -->
+                <div class="bg-gradient-to-br from-slate-900 via-gray-950 to-cyan-950 p-5 rounded-2xl shadow-xl border border-gray-800 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl"></div>
+                    <p class="text-[10px] text-cyan-400 uppercase font-bold tracking-wider">Saldo Disponible</p>
+                    <p id="dash-saldo" class="text-3xl font-black mt-1 text-white">$ 1.250.000</p>
+                    
+                    <div class="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-gray-800/60">
+                        <div>
+                            <p class="text-[9px] text-gray-400 uppercase">Gastos del Mes</p>
+                            <p id="dash-gastos" class="text-base font-bold text-red-400">$ 0.00</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] text-gray-400 uppercase">Ingresos Fijos</p>
+                            <p id="dash-ingresos" class="text-base font-bold text-green-400">$ 890.000</p>
+                        </div>
                     </div>
-                    <div class="bg-gray-850 p-3 rounded-xl border border-gray-800">
-                        <p class="text-[10px] text-gray-400 uppercase font-medium">Ingresos</p>
-                        <p class="text-lg font-bold text-green-400">$ 890.000</p>
+                </div>
+
+                <!-- RECOMENDACIONES DE JARVIS -->
+                <div class="bg-gray-950/40 p-4 rounded-2xl border border-gray-800/80">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Consejos de Jarvis</h3>
+                    <div id="insights-container" class="flex flex-col gap-2">
+                        <p class="text-xs text-gray-500 italic">Cargando sugerencias financieras...</p>
                     </div>
                 </div>
-            </div>
 
-            <div>
-                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Recomendaciones IA (Jarvis)</h3>
-                <div id="insights-container" class="flex flex-col gap-2">
-                    <p class="text-xs text-gray-500 italic">Cargando análisis de Jarvis...</p>
+                <!-- PANEL GRÁFICO (Diferenciador absoluto) -->
+                <div class="bg-gray-950 p-4 rounded-2xl border border-gray-800 shadow-md">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Distribución de Gastos</h3>
+                    <div class="relative w-full h-48 flex justify-center items-center">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- CARGA RÁPIDA DE GASTOS -->
+                <div class="bg-gray-950 p-4 rounded-2xl border border-gray-800 shadow-xl">
+                    <label class="block text-sm font-semibold text-gray-300 mb-2">Ingreso rápido por IA 🎙️</label>
+                    <textarea id="ai-input" rows="2" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:outline-none focus:border-cyan-500 text-white placeholder-gray-500 resize-none text-sm leading-relaxed" placeholder="Ej: compre carnes gaste 30 lucas..."></textarea>
+                    <button id="btn-send" class="w-full mt-3 bg-cyan-500 hover:bg-cyan-600 text-gray-950 font-bold py-3 px-4 rounded-xl transition duration-200 flex justify-center items-center gap-2 text-sm cursor-pointer shadow-lg shadow-cyan-500/10">
+                        <span>Registrar con IA</span>
+                    </button>
+                    <!-- Status feedback -->
+                    <div id="status-box" class="hidden mt-2 p-2.5 rounded-xl text-xs border"></div>
                 </div>
             </div>
 
-            <div class="bg-gray-850 p-4 rounded-2xl border border-gray-800 shadow-xl">
-                <label class="block text-sm font-medium text-gray-400 mb-2">¿Qué gastaste hoy?</label>
-                <textarea id="ai-input" rows="3" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:outline-none focus:border-cyan-500 text-white placeholder-gray-500 resize-none text-base" placeholder="Ej: compre carnes, gaste 30 lucas..."></textarea>
-                <button id="btn-send" class="w-full mt-3 bg-cyan-500 hover:bg-cyan-600 text-gray-950 font-bold py-3 px-4 rounded-xl transition duration-200 flex justify-center items-center gap-2 text-base cursor-pointer">
-                    <span>Procesar Gasto con IA</span>
-                </button>
-            </div>
+            <!-- SECCIÓN 2: HISTORIAL COMPLETO -->
+            <div id="tab-history" class="tab-content hidden flex flex-col gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white">Historial de Gastos</h2>
+                    <p class="text-xs text-gray-400">Todos tus movimientos registrados</p>
+                </div>
 
-            <div id="status-box" class="hidden p-3 rounded-xl text-sm border"></div>
-
-            <div>
-                <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Gastos Recientes</h2>
-                <div id="expenses-list" class="flex flex-col gap-2">
-                    <p class="text-gray-500 text-sm italic text-center py-4">No hay gastos registrados.</p>
+                <!-- Lista Completa -->
+                <div id="full-expenses-list" class="flex flex-col gap-2">
+                    <p class="text-gray-500 text-sm italic text-center py-8">Cargando historial...</p>
                 </div>
             </div>
+
+            <!-- SECCIÓN 3: CHAT CON JARVIS -->
+            <div id="tab-chat" class="tab-content hidden flex flex-col h-[70vh] gap-3">
+                <div class="shrink-0">
+                    <h2 class="text-xl font-bold text-white">Conversá con Jarvis 🧠</h2>
+                    <p class="text-xs text-gray-400">Preguntale sobre tus ahorros, recortes o deudas</p>
+                </div>
+
+                <!-- Ventana de Chat Scrolleable -->
+                <div id="chat-box" class="flex-1 bg-gray-950 rounded-2xl border border-gray-800 p-4 overflow-y-auto flex flex-col gap-3 min-h-[250px]">
+                    <div class="bg-gray-800/40 border border-gray-700/50 p-3 rounded-2xl text-xs leading-relaxed max-w-[85%] self-start text-cyan-300">
+                        🤖 ¡Hola Lucho! Soy Jarvis, tu consultor financiero personal. Preguntame en qué se te fue la plata, dónde podés recortar o si llegás a fin de mes.
+                    </div>
+                </div>
+
+                <!-- Entrada de Texto del Chat -->
+                <div class="flex gap-2 shrink-0">
+                    <input type="text" id="chat-input" class="flex-1 p-3 bg-gray-950 border border-gray-700 rounded-xl focus:outline-none focus:border-cyan-500 text-sm text-white placeholder-gray-500" placeholder="Ej: ¿en qué gasté más este mes?">
+                    <button id="btn-chat-send" class="bg-cyan-500 hover:bg-cyan-600 text-gray-950 font-bold px-5 rounded-xl cursor-pointer text-sm">Preguntar</button>
+                </div>
+            </div>
+
         </main>
+
+        <!-- Barra de Navegación Inferior (Estilo App Nativa) -->
+        <nav class="fixed bottom-0 left-0 right-0 bg-gray-950 border-t border-gray-800 p-2 flex justify-around items-center z-20 shrink-0">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center gap-1 p-2 text-cyan-400 font-bold transition text-xs cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v10a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z"></path></svg>
+                <span>Dashboard</span>
+            </button>
+            <button onclick="switchTab('history')" id="nav-history" class="flex flex-col items-center gap-1 p-2 text-gray-500 transition text-xs cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                <span>Historial</span>
+            </button>
+            <button onclick="switchTab('chat')" id="nav-chat" class="flex flex-col items-center gap-1 p-2 text-gray-500 transition text-xs cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                <span>Chat Jarvis</span>
+            </button>
+        </nav>
     </div>
 
+    <!-- LÓGICA DE CONTROL REACTIVA -->
     <script>
         const API_BASE = "http://103.195.101.213:8000"; 
         const WORKSPACE_ID = 1; 
 
-        // Captura de Elementos del DOM
+        // Elementos DOM
         const loginScreen = document.getElementById('login-screen');
         const appScreen = document.getElementById('app-screen');
         const btnLogin = document.getElementById('btn-login');
@@ -103,28 +171,61 @@
         const aiInput = document.getElementById('ai-input');
         const statusBox = document.getElementById('status-box');
         const expensesList = document.getElementById('expenses-list');
+        const fullExpensesList = document.getElementById('full-expenses-list');
         const insightsContainer = document.getElementById('insights-container');
+        
+        // Elementos de Chat
+        const chatBox = document.getElementById('chat-box');
+        const chatInput = document.getElementById('chat-input');
+        const btnChatSend = document.getElementById('btn-chat-send');
 
-        // Validador de sesión persistente
+        // Referencia del Gráfico Global para poder destruirlo y recrearlo sin solapamientos
+        let categoryChartInstance = null;
+
+        // Cambiador de Pestañas (SPA)
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+            // Actualizar colores del menú inferior
+            const navs = ['dashboard', 'history', 'chat'];
+            navs.forEach(nav => {
+                const el = document.getElementById(`nav-${nav}`);
+                if (nav === tabName) {
+                    el.classList.add('text-cyan-400', 'font-bold');
+                    el.classList.remove('text-gray-500');
+                } else {
+                    el.classList.remove('text-cyan-400', 'font-bold');
+                    el.classList.add('text-gray-500');
+                }
+            });
+
+            if (tabName === 'dashboard') {
+                loadExpenses();
+                loadInsights();
+            } else if (tabName === 'history') {
+                loadHistory();
+            }
+        }
+
+        // Validador de sesión
         function checkAuth() {
             const token = localStorage.getItem('argos_token');
             if (token) {
                 loginScreen.classList.add('hidden');
                 appScreen.classList.remove('hidden');
-                loadExpenses();
-                loadInsights();
+                switchTab('dashboard');
             } else {
                 loginScreen.classList.remove('hidden');
                 appScreen.classList.add('hidden');
             }
         }
 
-        // Envío de credenciales x-www-form-urlencoded
+        // Login
         if (btnLogin) {
             btnLogin.addEventListener('click', async () => {
                 const email = document.getElementById('login-email').value.trim();
                 const password = document.getElementById('login-password').value.trim();
-
                 if (!email || !password) return;
                 loginError.classList.add('hidden');
 
@@ -155,7 +256,7 @@
             });
         }
 
-        // Cierre de sesión
+        // Logout
         if (btnLogout) {
             btnLogout.addEventListener('click', () => {
                 localStorage.removeItem('argos_token');
@@ -163,17 +264,17 @@
             });
         }
 
-        // Banner de Estados
+        // Estados del banner de registro
         function showStatus(text, type) {
-            statusBox.className = "p-3 rounded-xl text-sm border " + 
-                (type === 'loading' ? "bg-cyan-900/30 border-cyan-700 text-cyan-400" : 
-                 type === 'success' ? "bg-green-900/30 border-green-700 text-green-400" : 
-                                      "bg-red-900/30 border-red-700 text-red-400");
+            statusBox.className = "p-3 rounded-xl text-xs border mt-2 " + 
+                (type === 'loading' ? "bg-cyan-950/60 border-cyan-700 text-cyan-400" : 
+                 type === 'success' ? "bg-green-950/60 border-green-700 text-green-400" : 
+                                      "bg-red-950/60 border-red-700 text-red-400");
             statusBox.innerText = text;
             statusBox.classList.remove('hidden');
         }
 
-        // Procesamiento del Gasto con Token Autenticado
+        // Registrar Gasto con IA
         if (btnSend) {
             btnSend.addEventListener('click', async () => {
                 const text = aiInput.value.trim();
@@ -181,7 +282,7 @@
 
                 const token = localStorage.getItem('argos_token');
                 btnSend.disabled = true;
-                showStatus("ARGOS interpretando gasto... 🧠", "loading");
+                showStatus("ARGOS analizando tu compra... 🧠", "loading");
 
                 try {
                     const response = await fetch(`${API_BASE}/ai/process-text?workspace_id=${WORKSPACE_ID}`, {
@@ -195,7 +296,7 @@
 
                     if (response.ok) {
                         const data = await response.json();
-                        showStatus(`✅ Registrado: ${data.description} por $${data.amount}`, "success");
+                        showStatus(`✅ Guardado: ${data.description} por $${data.amount}`, "success");
                         aiInput.value = "";
                         await loadExpenses();
                         await loadInsights();
@@ -204,14 +305,14 @@
                         showStatus(`❌ Error: ${err.detail || 'No se pudo procesar'}`, "error");
                     }
                 } catch (e) {
-                    showStatus("❌ Error de comunicación", "error");
+                    showStatus("❌ Error de comunicación con el servidor", "error");
                 } finally {
                     btnSend.disabled = false;
                 }
             });
         }
 
-        // Lectura y renderizado seguro del Historial y Dashboard
+        // Cargar Datos, Métricas y Gráfico del Dashboard
         async function loadExpenses() {
             const token = localStorage.getItem('argos_token');
             if (!token) return;
@@ -223,37 +324,97 @@
                 if (response.ok) {
                     const expenses = await response.json();
                     
-                    // Suma acumulada de gastos reales
+                    // Cálculo de totales dinámicos
                     const total = expenses && expenses.length > 0 
                         ? expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0) 
                         : 0;
                     
                     document.getElementById('dash-gastos').innerText = `$ ${total.toLocaleString('es-AR')}`;
+                    
+                    const ingresos = 890000; // Hardcodeado para test
+                    const saldo = ingresos - total;
+                    document.getElementById('dash-saldo').innerText = `$ ${saldo.toLocaleString('es-AR')}`;
 
-                    if (!expenses || expenses.length === 0) {
-                        expensesList.innerHTML = '<p class="text-gray-500 text-sm italic text-center py-4">No hay gastos registrados.</p>';
-                        return;
-                    }
-
-                    expensesList.innerHTML = expenses.reverse().slice(0, 5).map(exp => `
-                        <div class="bg-gray-850 p-3 rounded-xl border border-gray-800 flex justify-between items-center">
-                            <div>
-                                <p class="font-medium text-white text-sm">${exp.description}</p>
-                                <span class="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded-full">${exp.category}</span>
-                            </div>
-                            <div class="text-right">
-                                <p class="font-bold text-cyan-400 text-sm">$${parseFloat(exp.amount).toLocaleString('es-AR')}</p>
-                                <p class="text-[9px] text-gray-500">${exp.expense_date}</p>
-                            </div>
-                        </div>
-                    `).join('');
+                    // Renderizar el Gráfico Dinámico de Categorías usando Chart.js
+                    renderChart(expenses);
                 }
             } catch (e) {
-                console.error("Error cargando gastos:", e);
+                console.error("Error cargando dashboard:", e);
             }
         }
 
-        // Consumo de sugerencias de Jarvis con formateo de colores dinámico
+        // Renderizar el Gráfico de Torta / Donut
+        function renderChart(expenses) {
+            const ctx = document.getElementById('categoryChart');
+            if (!ctx) return;
+
+            // Agrupar gastos por categoría
+            const grouped = {};
+            expenses.forEach(e => {
+                grouped[e.category] = (grouped[e.category] || 0) + parseFloat(e.amount);
+            });
+
+            const labels = Object.keys(grouped);
+            const data = Object.values(grouped);
+
+            // Destruir instancia anterior para evitar colisiones
+            if (categoryChartInstance) {
+                categoryChartInstance.destroy();
+            }
+
+            if (labels.length === 0) {
+                // Si no hay datos, mostramos un gráfico de "vacío"
+                categoryChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Sin gastos'],
+                        datasets: [{
+                            data: [1],
+                            backgroundColor: ['#374151']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } }
+                    }
+                });
+                return;
+            }
+
+            // Crear el gráfico dinámico real
+            categoryChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#06b6d4', '#3b82f6', '#ef4444', '#10b981', '#f59e0b', 
+                            '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6', '#f43f5e'
+                        ],
+                        borderWidth: 1,
+                        borderColor: '#111827'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#9ca3af',
+                                font: { size: 10 }
+                            }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        // Cargar Consejos Breves de Jarvis
         async function loadInsights() {
             const token = localStorage.getItem('argos_token');
             if (!token || !insightsContainer) return;
@@ -265,14 +426,14 @@
                 if (response.ok) {
                     const data = await response.json();
                     if (!data.insights || data.insights.length === 0) {
-                        insightsContainer.innerHTML = '<p class="text-xs text-gray-500 italic">Sin alertas por el momento.</p>';
+                        insightsContainer.innerHTML = '<p class="text-xs text-gray-500 italic">Sin novedades por el momento.</p>';
                         return;
                     }
 
                     insightsContainer.innerHTML = data.insights.map(ins => {
-                        let colorClass = "bg-blue-950/40 border-blue-800 text-blue-300"; 
-                        if (ins.type === 'warning') colorClass = "bg-red-950/40 border-red-900 text-red-300";
-                        if (ins.type === 'success') colorClass = "bg-green-950/40 border-green-900 text-green-300";
+                        let colorClass = "bg-blue-950/40 border-blue-800/60 text-blue-300"; 
+                        if (ins.type === 'warning') colorClass = "bg-red-950/40 border-red-900/60 text-red-300";
+                        if (ins.type === 'success') colorClass = "bg-green-950/40 border-green-900/60 text-green-300";
 
                         return `
                             <div class="p-3 rounded-xl border text-xs leading-relaxed ${colorClass}">
@@ -286,7 +447,121 @@
             }
         }
 
-        // Ejecución inicial de validación
+        // Cargar Historial Completo (Sección 2)
+        async function loadHistory() {
+            const token = localStorage.getItem('argos_token');
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/expenses/workspace/${WORKSPACE_ID}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const expenses = await response.json();
+                    if (!expenses || expenses.length === 0) {
+                        fullExpensesList.innerHTML = '<p class="text-gray-500 text-sm italic text-center py-12">No hay gastos registrados en este workspace.</p>';
+                        return;
+                    }
+
+                    fullExpensesList.innerHTML = expenses.reverse().map(exp => `
+                        <div class="bg-gray-950 p-3.5 rounded-xl border border-gray-800 flex justify-between items-center shadow-sm">
+                            <div>
+                                <p class="font-bold text-white text-sm">${exp.description}</p>
+                                <span class="text-[10px] text-gray-400 bg-gray-900 px-2.5 py-0.5 rounded-full border border-gray-800">${exp.category}</span>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-black text-cyan-400 text-sm">$${parseFloat(exp.amount).toLocaleString('es-AR')}</p>
+                                <p class="text-[9px] text-gray-500 mt-1">${exp.expense_date}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error("Error cargando historial completo:", e);
+            }
+        }
+
+        // Interacción conversacional con Jarvis (Sección 3)
+        async function sendChatMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            // Añadir mensaje del usuario en pantalla
+            appendBubble(text, 'user');
+            chatInput.value = "";
+
+            // Añadir burbuja de carga/pensando
+            const loadingId = appendBubble("Jarvis está analizando los números... 🧠", "loading");
+
+            const token = localStorage.getItem('argos_token');
+            try {
+                const response = await fetch(`${API_BASE}/ai/chat?workspace_id=${WORKSPACE_ID}`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                // Quitar burbuja de carga
+                document.getElementById(loadingId)?.remove();
+
+                if (response.ok) {
+                    const data = await response.json();
+                    appendBubble(data.reply, 'jarvis');
+                } else {
+                    appendBubble("❌ No pude conectarme con mis servidores cognitivos de Google. Reintentá en un ratito.", 'error');
+                }
+            } catch (e) {
+                document.getElementById(loadingId)?.remove();
+                appendBubble("❌ Error crítico de red. Verificá tu VPS.", 'error');
+            }
+        }
+
+        // Imprimir burbujas en el chat
+        function appendBubble(text, sender) {
+            const id = 'bubble_' + Math.random().toString(36).substring(2, 9);
+            let bubbleClass = "";
+            
+            if (sender === 'user') {
+                bubbleClass = "bg-cyan-500 text-gray-950 font-medium max-w-[85%] self-end rounded-2xl p-3 text-xs shadow-md";
+            } else if (sender === 'jarvis') {
+                bubbleClass = "bg-gray-900 border border-gray-800 text-gray-100 max-w-[85%] self-start rounded-2xl p-3 text-xs leading-relaxed shadow-sm";
+            } else if (sender === 'loading') {
+                bubbleClass = "bg-gray-900/50 border border-gray-800 text-gray-400 max-w-[85%] self-start rounded-2xl p-3 text-xs italic animate-pulse";
+            } else {
+                bubbleClass = "bg-red-950/30 border border-red-900 text-red-300 max-w-[85%] self-start rounded-2xl p-3 text-xs";
+            }
+
+            const wrapper = document.createElement('div');
+            wrapper.id = id;
+            wrapper.className = `flex w-full ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+            
+            // Reemplazar saltos de línea por <br> y markdown simple (negrita)
+            const formattedText = text
+                .replace(/\n/g, '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+            wrapper.innerHTML = `<div class="${bubbleClass}">${formattedText}</div>`;
+            chatBox.appendChild(wrapper);
+            
+            // Auto scroll abajo de todo
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return id;
+        }
+
+        // Listener de Enter para el Chat
+        if (chatInput) {
+            chatInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') sendChatMessage();
+            });
+        }
+        if (btnChatSend) {
+            btnChatSend.addEventListener('click', sendChatMessage);
+        }
+
+        // Inicio automático de la App
         checkAuth();
     </script>
 </body>
