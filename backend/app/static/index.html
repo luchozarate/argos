@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARGOS - Copiloto Financiero</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans antialiased min-h-screen flex flex-col justify-between">
+
+    <header class="p-4 border-b border-gray-800 bg-gray-950 flex justify-between items-center">
+        <h1 class="text-xl font-bold tracking-wider text-cyan-400">ARGOS 🤖</h1>
+        <span class="text-xs bg-cyan-900/50 text-cyan-300 px-2 py-1 rounded-full border border-cyan-700/50">Workspace: Personal</span>
+    </header>
+
+    <main class="flex-1 p-4 max-w-md mx-auto w-full flex flex-col gap-4 overflow-y-auto">
+        
+        <div class="bg-gray-850 p-4 rounded-2xl border border-gray-800 shadow-xl">
+            <label class="block text-sm font-medium text-gray-400 mb-2">¿Qué gastaste hoy?</label>
+            <textarea id="ai-input" rows="3" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:outline-none focus:border-cyan-500 text-white placeholder-gray-500 resize-none text-base" placeholder="Ej: compre carnes, gaste 30 lucas..."></textarea>
+            
+            <button id="btn-send" class="w-full mt-3 bg-cyan-500 hover:bg-cyan-600 text-gray-950 font-bold py-3 px-4 rounded-xl transition duration-200 flex justify-center items-center gap-2 text-base cursor-pointer">
+                <span>Procesar Gasto con IA</span>
+            </button>
+        </div>
+
+        <div id="status-box" class="hidden p-3 rounded-xl text-sm border"></div>
+
+        <div class="flex-1">
+            <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Gastos Recientes</h2>
+            <div id="expenses-list" class="flex flex-col gap-2">
+                <p class="text-gray-500 text-sm italic text-center py-4">No hay gastos registrados en este workspace.</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = ""; // Al estar en el mismo servidor, usa ruta relativa
+        const WORKSPACE_ID = 1; // Por ahora hardcodeado para tu test inicial
+
+        const btnSend = document.getElementById('btn-send');
+        const aiInput = document.getElementById('ai-input');
+        const statusBox = document.getElementById('status-box');
+        const expensesList = document.getElementById('expenses-list');
+
+        // Función para mostrar mensajes de estado
+        function showStatus(text, type) {
+            statusBox.classList.remove('hidden', 'bg-green-900/30', 'border-green-700', 'text-green-400', 'bg-red-900/30', 'border-red-700', 'text-red-400', 'bg-cyan-900/30', 'border-cyan-700', 'text-cyan-400');
+            if (type === 'loading') {
+                statusBox.className = "p-3 rounded-xl text-sm border bg-cyan-900/30 border-cyan-700 text-cyan-400";
+            } else if (type === 'success') {
+                statusBox.className = "p-3 rounded-xl text-sm border bg-green-900/30 border-green-700 text-green-400";
+            } else {
+                statusBox.className = "p-3 rounded-xl text-sm border bg-red-900/30 border-red-700 text-red-400";
+            }
+            statusBox.innerText = text;
+        }
+
+        // Registrar gasto con la IA
+        btnSend.addEventListener('click', async () => {
+            const text = aiInput.value.trim();
+            if (!text) return;
+
+            btnSend.disabled = true;
+            showStatus("ARGOS está interpretando tu gasto... 🧠", "loading");
+
+            try {
+                const response = await fetch(`${API_BASE}/ai/process-text?workspace_id=${WORKSPACE_ID}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus(`✅ Guardado: ${data.description} por $${data.amount}`, "success");
+                    aiInput.value = "";
+                    loadExpenses(); // Recargar la lista
+                } else {
+                    const err = await response.json();
+                    showStatus(`❌ Error: ${err.detail || 'No se pudo procesar'}`, "error");
+                }
+            } catch (e) {
+                showStatus("❌ Error de conexión con el servidor", "error");
+            } finally {
+                btnSend.disabled = false;
+            }
+        });
+
+        // Cargar los gastos del Workspace
+        async function loadExpenses() {
+            try {
+                const response = await fetch(`${API_BASE}/expenses/workspace/${WORKSPACE_ID}`);
+                if (response.ok) {
+                    const expenses = await response.json();
+                    if (expenses.length === 0) return;
+
+                    expensesList.innerHTML = expenses.reverse().slice(0, 5).map(exp => `
+                        <div class="bg-gray-850 p-3 rounded-xl border border-gray-800 flex justify-between items-center">
+                            <div>
+                                <p class="font-medium text-white">${exp.description}</p>
+                                <span class="text-xs text-gray-400 bg-gray-800 px-2 py-0.5 rounded-full">${exp.category}</span>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-cyan-400">$${parseFloat(exp.amount).toLocaleString('es-AR')}</p>
+                                <p class="text-[10px] text-gray-500">${exp.expense_date}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error("Error cargando gastos", e);
+            }
+        }
+
+        // Carga inicial al abrir la página
+        loadExpenses();
+    </script>
+</body>
+</html>
