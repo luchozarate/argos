@@ -82,8 +82,8 @@
     </div>
 
     <script>
-        const API_BASE = ""; 
-        const WORKSPACE_ID = 1; // Ajustar dinámicamente si es necesario luego
+        const API_BASE = "http://103.195.101.213:8000"; 
+        const WORKSPACE_ID = 1; 
 
         // Elementos DOM
         const loginScreen = document.getElementById('login-screen');
@@ -97,80 +97,61 @@
         const expensesList = document.getElementById('expenses-list');
 
         // Chequear sesión al cargar la web
-        async function loadExpenses() {
+        function checkAuth() {
             const token = localStorage.getItem('argos_token');
-            try {
-                const response = await fetch(`${API_BASE}/expenses/workspace/${WORKSPACE_ID}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (response.ok) {
-                    const expenses = await response.json();
-                    
-                    // --- AQUÍ SE INYECTA EL CÁLCULO DINÁMICO ---
-                    const total = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
-                    document.getElementById('dash-gastos').innerText = `$ ${total.toLocaleString('es-AR')}`;
-                    // --------------------------------------------
-
-                    if (expenses.length === 0) return;
-
-                    expensesList.innerHTML = expenses.reverse().slice(0, 5).map(exp => `
-                        <div class="bg-gray-850 p-3 rounded-xl border border-gray-800 flex justify-between items-center">
-                            <div>
-                                <p class="font-medium text-white text-sm">${exp.description}</p>
-                                <span class="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded-full">${exp.category}</span>
-                            </div>
-                            <div class="text-right">
-                                <p class="font-bold text-cyan-400 text-sm">$${parseFloat(exp.amount).toLocaleString('es-AR')}</p>
-                                <p class="text-[9px] text-gray-500">${exp.expense_date}</p>
-                            </div>
-                        </div>
-                    `).join('');
-                }
-            } catch (e) {
-                console.error("Error cargando gastos", e);
+            if (token) {
+                loginScreen.classList.add('hidden');
+                appScreen.classList.remove('hidden');
+                loadExpenses();
+            } else {
+                loginScreen.classList.remove('hidden');
+                appScreen.classList.add('hidden');
             }
         }
 
-        // Manejar Login contra tu /auth/login (que usa x-www-form-urlencoded)
-        btnLogin.addEventListener('click', async () => {
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value.trim();
+        // Manejar Login contra /auth/login
+        if (btnLogin) {
+            btnLogin.addEventListener('click', async () => {
+                const email = document.getElementById('login-email').value.trim();
+                const password = document.getElementById('login-password').value.trim();
 
-            if (!email || !password) return;
-            loginError.classList.add('hidden');
+                if (!email || !password) return;
+                loginError.classList.add('hidden');
 
-            try {
-                // El endpoint /auth/login usa OAuth2PasswordRequestForm (form data)
-                const formData = new URLSearchParams();
-                formData.append('username', email); // FastAPI espera 'username'
-                formData.append('password', password);
+                try {
+                    const formData = new URLSearchParams();
+                    formData.append('username', email); 
+                    formData.append('password', password);
 
-                const response = await fetch(`${API_BASE}/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formData
-                });
+                    const response = await fetch(`${API_BASE}/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formData
+                    });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    localStorage.setItem('argos_token', data.access_token);
-                    checkAuth();
-                } else {
-                    const err = await response.json();
-                    loginError.innerText = `Error: ${err.detail || 'Credenciales inválidas'}`;
+                    if (response.ok) {
+                        const data = await response.json();
+                        localStorage.setItem('argos_token', data.access_token);
+                        checkAuth();
+                    } else {
+                        const err = await response.json();
+                        loginError.innerText = `Error: ${err.detail || 'Credenciales inválidas'}`;
+                        loginError.classList.remove('hidden');
+                    }
+                } catch (e) {
+                    loginError.innerText = "❌ Error de conexión con el VPS";
                     loginError.classList.remove('hidden');
                 }
-            } catch (e) {
-                loginError.innerText = "❌ Error de conexión con el VPS";
-                loginError.classList.remove('hidden');
-            }
-        });
+            });
+        }
 
         // Manejar Logout
-        btnLogout.addEventListener('click', () => {
-            localStorage.removeItem('argos_token');
-            checkAuth();
-        });
+        if (btnLogout) {
+            btnLogout.addEventListener('click', () => {
+                localStorage.removeItem('argos_token');
+                checkAuth();
+            });
+        }
 
         // Mostrar estados
         function showStatus(text, type) {
@@ -182,44 +163,48 @@
             statusBox.classList.remove('hidden');
         }
 
-        // Enviar gasto con IA pasando el Token en los Headers
-        btnSend.addEventListener('click', async () => {
-            const text = aiInput.value.trim();
-            if (!text) return;
+        // Enviar gasto con IA
+        if (btnSend) {
+            btnSend.addEventListener('click', async () => {
+                const text = aiInput.value.trim();
+                if (!text) return;
 
-            const token = localStorage.getItem('argos_token');
-            btnSend.disabled = true;
-            showStatus("ARGOS interpretando gasto... 🧠", "loading");
+                const token = localStorage.getItem('argos_token');
+                btnSend.disabled = true;
+                showStatus("ARGOS interpretando gasto... 🧠", "loading");
 
-            try {
-                const response = await fetch(`${API_BASE}/ai/process-text?workspace_id=${WORKSPACE_ID}`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` // <-- AQUÍ VIAJA TU TOKEN JWT
-                    },
-                    body: JSON.stringify({ text: text })
-                });
+                try {
+                    const response = await fetch(`${API_BASE}/ai/process-text?workspace_id=${WORKSPACE_ID}`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}` 
+                        },
+                        body: JSON.stringify({ text: text })
+                    });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    showStatus(`✅ Registrado: ${data.description} por $${data.amount}`, "success");
-                    aiInput.value = "";
-                    loadExpenses();
-                } else {
-                    const err = await response.json();
-                    showStatus(`❌ Error: ${err.detail || 'No autorizado'}`, "error");
+                    if (response.ok) {
+                        const data = await response.json();
+                        showStatus(`✅ Registrado: ${data.description} por $${data.amount}`, "success");
+                        aiInput.value = "";
+                        await loadExpenses();
+                    } else {
+                        const err = await response.json();
+                        showStatus(`❌ Error: ${err.detail || 'No se pudo procesar'}`, "error");
+                    }
+                } catch (e) {
+                    showStatus("❌ Error de comunicación", "error");
+                } finally {
+                    btnSend.disabled = false;
                 }
-            } catch (e) {
-                showStatus("❌ Error de comunicación", "error");
-            } finally {
-                btnSend.disabled = false;
-            }
-        });
+            });
+        }
 
-        // Cargar gastos pasando el Token
+        // Cargar gastos y actualizar Dashboard
         async function loadExpenses() {
             const token = localStorage.getItem('argos_token');
+            if (!token) return;
+
             try {
                 const response = await fetch(`${API_BASE}/expenses/workspace/${WORKSPACE_ID}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -227,20 +212,20 @@
                 if (response.ok) {
                     const expenses = await response.json();
                     
-                    // Validamos: Si no hay gastos, el total es 0 y el dashboard no se rompe
+                    // Cálculo dinámico seguro para el Dashboard
                     const total = expenses && expenses.length > 0 
                         ? expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0) 
                         : 0;
                     
                     document.getElementById('dash-gastos').innerText = `$ ${total.toLocaleString('es-AR')}`;
 
-                    // Si está vacío, limpiamos la lista visual y salimos de la función sin fallar
+                    // Si está vacío, mostramos el cartel correspondiente de forma limpia
                     if (!expenses || expenses.length === 0) {
                         expensesList.innerHTML = '<p class="text-gray-500 text-sm italic text-center py-4">No hay gastos registrados.</p>';
                         return;
                     }
 
-                    // Si hay datos, renderiza los últimos 5
+                    // Renderizar los últimos 5 gastos impactados
                     expensesList.innerHTML = expenses.reverse().slice(0, 5).map(exp => `
                         <div class="bg-gray-850 p-3 rounded-xl border border-gray-800 flex justify-between items-center">
                             <div>
@@ -255,12 +240,11 @@
                     `).join('');
                 }
             } catch (e) {
-                console.error("Error cargando gastos", e);
-                // Ya no ponemos el alert molesto en pantalla para que no confunda
+                console.error("Error cargando gastos:", e);
             }
         }
 
-        // Ejecutar chequeo inicial
+        // Ejecutar chequeo inicial de sesión al cargar la página
         checkAuth();
     </script>
 </body>
