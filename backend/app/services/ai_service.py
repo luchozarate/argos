@@ -96,3 +96,76 @@ class AIService:
                 amount=monto,
                 expense_date=date.today()
             )
+            
+    def generate_financial_insights(self, expenses: list, income: float) -> list:
+        # Si la cuenta sigue en modo gratuito y trabada, dejamos un "mock" super inteligente basado en datos reales
+        # Pero si la API Key está activa, Gemini analizará de verdad todo tu mes.
+        
+        total_gastado = sum(float(e.amount) for e in expenses)
+        
+        # Armamos un resumen en texto de los gastos para enviarle a la IA
+        resumen_gastos = ""
+        for e in expenses:
+            resumen_gastos += f"- {e.expense_date}: {e.description} ({e.category}) -> ${e.amount}\n"
+
+        prompt = f"""
+        Sos ARGOS, el copiloto financiero personal y analista experto del usuario. Tu misión es ser un "Jarvis" financiero: directo, inteligente y proactivo. No suavices las cosas si la economía va mal.
+        
+        Datos financieros del mes actual:
+        - Ingresos totales: ${income}
+        - Total gastado hasta ahora: ${total_gastado}
+        
+        Lista detallada de gastos del usuario:
+        {resumen_gastos}
+        
+        Analizá el ritmo de gasto. Debes devolver una respuesta ESTRICTAMENTE en formato JSON con una lista de máximo 3 recomendaciones/alertas clave.
+        Estructura esperada:
+        {{
+            "insights": [
+                {{"type": "warning | advice | success", "message": "Tu consejo personalizado y crudo aquí"}}
+            ]
+        }}
+        """
+
+        try:
+            # Si tu cuenta ya tiene fondos/tarjeta, esto va a llamar a Gemini de verdad
+            response = self.client.models.generate_content(
+                model='gemini-2.0-flash', 
+                contents=prompt,
+                config=types.GenerateContentConfig(response_mime_type="application/json"),
+            )
+            data = json.loads(response.text.strip())
+            return data["insights"]
+            
+        except Exception as e:
+            # Failover analítico local por si Google sigue bloqueando la cuota
+            print(f"⚠️ No se pudieron generar insights con Gemini ({str(e)}). Usando motor analítico local...")
+            
+            local_insights = []
+            porcentaje_gastado = (total_gastado / income) * 100 if income > 0 else 0
+            
+            if porcentaje_gastado > 80:
+                local_insights.append({
+                    "type": "warning", 
+                    "message": f"🚨 ¡Alerta roja, Lucho! Llevás gastado el {porcentaje_gastado:.1f}% de tus ingresos. A este ritmo no llegamos a fin de mes ni locos."
+                })
+            elif porcentaje_gastado > 50:
+                local_insights.append({
+                    "type": "advice", 
+                    "message": "⚠️ El ritmo de gasto está en zona amarilla. Te sugiero recortar las salidas o compras no esenciales esta semana para mantener el control."
+                })
+            else:
+                local_insights.append({
+                    "type": "success", 
+                    "message": "✅ Venís con buena conducta financiera este mes. Seguí así y vas a cumplir el objetivo de ahorro holgadamente."
+                })
+                
+            # Buscamos si gastó mucho en Supermercado
+            super_gastos = sum(float(e.amount) for e in expenses if e.category == "Supermercado")
+            if super_gastos > 0:
+                local_insights.append({
+                    "type": "advice", 
+                    "message": f"🥩 Ojo con los gastos de Supermercado/Carnicería (acumulás ${super_gastos:,.2f}). Podrías optimizar buscando ofertas mayoristas."
+                })
+                
+            return local_insights

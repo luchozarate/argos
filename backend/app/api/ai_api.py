@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from app.schemas.insights import InsightsResponse
 from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.schemas.ai import TextInput
@@ -15,6 +16,24 @@ router = APIRouter(
 
 ai_service = AIService()
 expense_service = ExpenseService()
+
+# Inyectamos el nuevo endpoint abajo
+@router.get("/insights", response_model=InsightsResponse)
+def get_financial_insights(
+    workspace_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # 1. Buscamos los gastos reales del usuario en la base de datos
+    expenses = expense_service.get_workspace_expenses(db=db, workspace_id=workspace_id)
+    
+    # 2. Hardcodeamos el ingreso del punto 9 ($890.000) por ahora para el test
+    income_test = 890000.0
+    
+    # 3. Mandamos los datos reales al motor de IA (con failover incluido)
+    ai_insights = ai_service.generate_financial_insights(expenses, income_test)
+    
+    return {"insights": ai_insights}
 
 @router.post("/process-text", response_model=ExpenseResponse)
 def process_financial_text(
