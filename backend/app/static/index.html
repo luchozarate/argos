@@ -35,12 +35,33 @@
         <header class="p-4 border-b border-gray-800 bg-gray-950 flex justify-between items-center">
             <h1 class="text-xl font-bold tracking-wider text-cyan-400">ARGOS 🤖</h1>
             <div class="flex items-center gap-3">
-                <span class="text-[11px] bg-cyan-900/50 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-700/50">Personal</span>
+                <span id="workspace-badge" class="text-[11px] bg-cyan-900/50 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-700/50">Personal</span>
                 <button id="btn-logout" class="text-xs text-gray-400 hover:text-red-400 cursor-pointer">Salir</button>
             </div>
         </header>
 
-        <main class="flex-1 p-4 max-w-md mx-auto w-full flex flex-col gap-4 overflow-y-auto">
+        <main class="flex-1 p-4 max-w-md mx-auto w-full flex flex-col gap-5 overflow-y-auto">
+            
+            <div>
+                <h2 class="text-xl font-bold text-white">Buenos días, Lucho 👋</h2>
+                <p class="text-xs text-gray-400">Estado de tu Workspace</p>
+                
+                <div class="mt-3 bg-gradient-to-br from-cyan-600 to-blue-800 p-5 rounded-2xl shadow-lg border border-cyan-500/30">
+                    <p class="text-xs text-cyan-200 uppercase font-semibold tracking-wider">Saldo Disponible</p>
+                    <p id="dash-saldo" class="text-3xl font-black mt-1">$ 1.250.000</p> </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-3">
+                    <div class="bg-gray-850 p-3 rounded-xl border border-gray-800">
+                        <p class="text-[10px] text-gray-400 uppercase font-medium">Gastos del Mes</p>
+                        <p id="dash-gastos" class="text-lg font-bold text-red-400">$ 0.00</p>
+                    </div>
+                    <div class="bg-gray-850 p-3 rounded-xl border border-gray-800">
+                        <p class="text-[10px] text-gray-400 uppercase font-medium">Ingresos</p>
+                        <p class="text-lg font-bold text-green-400">$ 890.000</p>
+                    </div>
+                </div>
+            </div>
+
             <div class="bg-gray-850 p-4 rounded-2xl border border-gray-800 shadow-xl">
                 <label class="block text-sm font-medium text-gray-400 mb-2">¿Qué gastaste hoy?</label>
                 <textarea id="ai-input" rows="3" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:outline-none focus:border-cyan-500 text-white placeholder-gray-500 resize-none text-base" placeholder="Ej: compre carnes, gaste 30 lucas..."></textarea>
@@ -51,7 +72,7 @@
 
             <div id="status-box" class="hidden p-3 rounded-xl text-sm border"></div>
 
-            <div class="flex-1">
+            <div>
                 <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Gastos Recientes</h2>
                 <div id="expenses-list" class="flex flex-col gap-2">
                     <p class="text-gray-500 text-sm italic text-center py-4">No hay gastos registrados.</p>
@@ -76,15 +97,37 @@
         const expensesList = document.getElementById('expenses-list');
 
         // Chequear sesión al cargar la web
-        function checkAuth() {
+        async function loadExpenses() {
             const token = localStorage.getItem('argos_token');
-            if (token) {
-                loginScreen.classList.add('hidden');
-                appScreen.classList.remove('hidden');
-                loadExpenses();
-            } else {
-                loginScreen.classList.remove('hidden');
-                appScreen.classList.add('hidden');
+            try {
+                const response = await fetch(`${API_BASE}/expenses/workspace/${WORKSPACE_ID}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const expenses = await response.json();
+                    
+                    // --- AQUÍ SE INYECTA EL CÁLCULO DINÁMICO ---
+                    const total = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+                    document.getElementById('dash-gastos').innerText = `$ ${total.toLocaleString('es-AR')}`;
+                    // --------------------------------------------
+
+                    if (expenses.length === 0) return;
+
+                    expensesList.innerHTML = expenses.reverse().slice(0, 5).map(exp => `
+                        <div class="bg-gray-850 p-3 rounded-xl border border-gray-800 flex justify-between items-center">
+                            <div>
+                                <p class="font-medium text-white text-sm">${exp.description}</p>
+                                <span class="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded-full">${exp.category}</span>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-cyan-400 text-sm">$${parseFloat(exp.amount).toLocaleString('es-AR')}</p>
+                                <p class="text-[9px] text-gray-500">${exp.expense_date}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error("Error cargando gastos", e);
             }
         }
 
