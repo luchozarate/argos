@@ -222,12 +222,25 @@
             const token = localStorage.getItem('argos_token');
             try {
                 const response = await fetch(`${API_BASE}/expenses/workspace/${WORKSPACE_ID}`, {
-                    headers: { 'Authorization': `Bearer ${token}` } // <-- AQUÍ TAMBIÉN
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
                     const expenses = await response.json();
-                    if (expenses.length === 0) return;
+                    
+                    // Validamos: Si no hay gastos, el total es 0 y el dashboard no se rompe
+                    const total = expenses && expenses.length > 0 
+                        ? expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0) 
+                        : 0;
+                    
+                    document.getElementById('dash-gastos').innerText = `$ ${total.toLocaleString('es-AR')}`;
 
+                    // Si está vacío, limpiamos la lista visual y salimos de la función sin fallar
+                    if (!expenses || expenses.length === 0) {
+                        expensesList.innerHTML = '<p class="text-gray-500 text-sm italic text-center py-4">No hay gastos registrados.</p>';
+                        return;
+                    }
+
+                    // Si hay datos, renderiza los últimos 5
                     expensesList.innerHTML = expenses.reverse().slice(0, 5).map(exp => `
                         <div class="bg-gray-850 p-3 rounded-xl border border-gray-800 flex justify-between items-center">
                             <div>
@@ -243,6 +256,7 @@
                 }
             } catch (e) {
                 console.error("Error cargando gastos", e);
+                // Ya no ponemos el alert molesto en pantalla para que no confunda
             }
         }
 
