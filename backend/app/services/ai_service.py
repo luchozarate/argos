@@ -56,15 +56,20 @@ class AIService:
                 ),
             )
             data = json.loads(response.text.strip())
+            
+            # Diagnostic flag en la descripción del gasto si se usa IA real
+            desc_real = f"{data['description']} 🤖"
+            
             return ExpenseCreate(
-                description=data["description"],
+                description=desc_real,
                 category=data["category"],
                 amount=data["amount"],
                 expense_date=data["expense_date"]
             )
         except Exception as e:
-            # FAILOVER LOCAL INTELIGENTE POR REGEX (Por si la cuota gratuita de Google se satura)
-            print(f"⚠️ Servidor Gemini no disponible ({str(e)}). Procesando con motor analítico local...")
+            # FAILOVER LOCAL INTELIGENTE (Offline fallback)
+            print(f"❌ DETALLE DE ERROR EN GEMINI API: {str(e)}")
+            print("⚠️ Iniciando parseo de emergencia local...")
             monto = 1000.00
             text_lower = user_text.lower()
             
@@ -77,9 +82,9 @@ class AIService:
                 monto = float(numeros_puros[0])
             
             categoria = "Otros"
-            if any(p in text_lower for p in ["carne", "super", "comida", "almacen", "verdura", "chino"]):
+            if any(p in text_lower for p in ["carne", "super", "comida", "almacen", "verdura", "chino", "asado", "carniceria"]):
                 categoria = "Supermercado"
-            elif any(p in text_lower for p in ["luz", "agua", "gas", "boleta", "factura", "edenor", "metrogas"]):
+            elif any(p in text_lower for p in ["luz", "agua", "gas", "boleta", "factura", "edenor", "metrogas", "edesur"]):
                 categoria = "Servicios"
             elif any(p in text_lower for p in ["nafta", "combustible", "shell", "ypf", "axion"]):
                 categoria = "Combustible"
@@ -88,8 +93,11 @@ class AIService:
             elif any(p in text_lower for p in ["expensa", "expensas"]):
                 categoria = "Expensas"
 
+            # Diagnostic flag en la descripción del gasto indicando fallback
+            desc_fallback = f"{user_text[:30]} 💻" if user_text else "Gasto Manual 💻"
+
             return ExpenseCreate(
-                description=user_text[:40] if user_text else "Gasto Manual",
+                description=desc_fallback,
                 category=categoria,
                 amount=monto,
                 expense_date=date.today()
@@ -145,14 +153,14 @@ class AIService:
 
     def generate_chat_response(self, user_message: str, expenses: list, income: float) -> str:
         """
-        Simula o procesa una conversación interactiva con Jarvis analizando toda la base de datos real.
+        Procesa una conversación interactiva con Jarvis analizando toda la base de datos real.
         """
         total_gastado = sum(float(e.amount) for e in expenses)
         resumen_gastos = "".join([f"- {e.expense_date}: {e.description} ({e.category}) -> ${e.amount}\n" for e in expenses])
 
         prompt = f"""
         Sos ARGOS (Jarvis), el co-piloto financiero personal del usuario. 
-        Tu tono es directo, sumamente inteligente, pragmático, con personalidad argentina amigable pero firme. No andes con vueltas técnicas aburridas.
+        Tu tono es directo, sumamente inteligente, pragmático, con personalidad argentina amigable pero firme. No andes con vueltas de manual.
         
         Datos de la base de datos de este mes:
         - Ingresos de Lucho: ${income}
@@ -172,30 +180,86 @@ class AIService:
                 model='gemini-2.0-flash', 
                 contents=prompt,
             )
-            return response.text.strip()
+            # Firmamos con el Jarvis de Industrias Stark
+            return f"{response.text.strip()}\n\n🤖 *[Jarvis Real - Gemini 2.0]*"
+            
         except Exception as e:
-            # Failover conversacional: analiza de verdad los datos de la DB localmente para responder inteligente
-            print(f"⚠️ Error en Gemini Chat ({str(e)}). Ejecutando motor de respuesta local...")
+            # Logueamos el error de Google en la terminal para el SysAdmin
+            print(f"❌ DETALLE DE ERROR EN CHAT GEMINI: {str(e)}")
+            print("⚠️ Activando failover analítico local...")
+            
             msg = user_message.lower()
-            
-            # Agrupar categorías
-            categorias = {}
-            for e in expenses:
-                categorias[e.category] = categorias.get(e.category, 0) + float(e.amount)
-            
-            cat_mas_cara = max(categorias, key=categorias.get) if categorias else "Ninguna"
-            monto_mas_caro = categorias.get(cat_mas_cara, 0) if categorias else 0
-            
+
             if not expenses:
-                return "¡Hola Lucho! Todavía no registraste ningún movimiento en este Workspace. Tirame qué compraste hoy y arranco a analizar tu economía."
+                return "¡Hola Lucho! Todavía no registraste ningún gasto. Agregá algo y arranco a auditar.\n\n💻 *[Jarvis de Emergencia - Offline Mode]*"
 
-            if any(x in msg for x in ["gaste", "gasto", "en que", "plata", "mayor"]):
-                return f"Lucho, estuve revisando los números. Tu mayor pozo de gasto este mes es **{cat_mas_cara}** con un acumulado de **${monto_mas_caro:,.2f}**. Representa una parte importante de tu presupuesto actual de ${income:,.2f}. ¿Querés que busquemos cómo recortar ahí?"
+            # Mapeamos palabras de consulta comunes a categorías reales o descripciones
+            category_mapping = {
+                "luz": ["servicios", "luz", "boleta", "edenor", "edesur", "luz"],
+                "comida": ["supermercado", "comida", "carne", "carniceria", "chino", "almacen", "verdura", "asado"],
+                "super": ["supermercado", "super", "almacen"],
+                "nafta": ["combustible", "nafta", "ypf", "shell", "axion"],
+                "combustible": ["combustible", "nafta", "ypf", "shell", "axion"],
+                "alquiler": ["alquiler", "renta"],
+                "expensas": ["expensas", "expensa"],
+                "internet": ["internet", "wifi", "fibertel", "telecentro"],
+                "streaming": ["streaming", "netflix", "spotify", "disney", "prime"],
+                "negocios": ["negocios", "negocio", "clientes", "proveedores"],
+                "impuestos": ["impuestos", "impuesto", "afip", "arca", "rentas"]
+            }
+
+            matched_key = None
+            matched_keywords = []
+            for key, keywords in category_mapping.items():
+                if any(kw in msg for kw in keywords):
+                    matched_key = key
+                    matched_keywords = keywords
+                    break
+
+            if matched_key:
+                matching_expenses = []
+                for exp in expenses:
+                    desc_lower = exp.description.lower()
+                    cat_lower = exp.category.lower()
+                    if any(kw in desc_lower or kw in cat_lower for kw in matched_keywords):
+                        matching_expenses.append(exp)
                 
-            if any(x in msg for x in ["recortar", "ahorrar", "consejo", "ayuda", "bajar"]):
-                comida_gasto = categorias.get("Supermercado", 0) + categorias.get("Comida", 0)
-                if comida_gasto > 40000:
-                    return f"Analizando tus consumos, el rubro de comidas y supermercado acumula **${comida_gasto:,.2f}**. Ahí hay tierra fértil para recortar: podés evitar los deliveries de fin de semana o aprovechar los días de descuento de las billeteras virtuales."
-                return "Te sugiero atacar los gastos hormiga (cafecitos, kioscos, suscripciones que no usás). Parecen pavadas, pero a fin de mes te hacen un agujero gigante en el saldo."
+                sum_matched = sum(float(item.amount) for item in matching_expenses)
+                
+                if matching_expenses:
+                    detail_str = "<br>".join([f"• 💰 **${float(item.amount):,.2f}** en '{item.description}' ({item.expense_date})" for item in matching_expenses])
+                    return (
+                        f"Lucho, estuve auditando las bases de datos locales. En el rubro **{matched_key.capitalize()}** llevás gastados **${sum_matched:,.2f}** este mes.<br><br>"
+                        f"Detalle encontrado en PostgreSQL:<br>{detail_str}<br><br>"
+                        f"¿Buscamos cómo achicar ahí?"
+                        f"\n\n💻 *[Jarvis de Emergencia - Offline Mode]*"
+                    )
+                else:
+                    return f"Lucho, busqué en PostgreSQL pero no encontré registros de **{matched_key.capitalize()}**. Cargá un gasto de prueba y lo sumamos.\n\n💻 *[Jarvis de Emergencia - Offline Mode]*"
 
-            return f"Acá ARGOS, Lucho. Actualmente tenés ${total_gastado:,.2f} gastados de tus ${income:,.2f} disponibles. Estoy listo para ayudarte a auditar tus gastos fijos o planificar el próximo mes. ¿Por dónde querés arrancar?"
+            # Si pregunta general
+            if any(x in msg for x in ["gaste", "gasto", "en que", "plata", "mayor", "resumen"]):
+                cat_totals = {}
+                for exp in expenses:
+                    cat_totals[exp.category] = cat_totals.get(exp.category, 0.0) + float(exp.amount)
+                
+                sorted_cats = sorted(cat_totals.items(), key=lambda x: x[1], reverse=True)
+                top_cat, top_amount = sorted_cats[0]
+                summary_lines = [f"• **{cat}**: ${amt:,.2f}" for cat, amt in sorted_cats[:3]]
+                summary_str = "<br>".join(summary_lines)
+                
+                return (
+                    f"Acá Jarvis Offline, Lucho. Tu mayor pozo de consumo este mes es **{top_cat}** con **${top_amount:,.2f}**.<br><br>"
+                    f"Consumos principales:<br>{summary_str}<br><br>"
+                    f"Acumulás **${total_gastado:,.2f}** gastados de un ingreso neto de ${income:,.2f}."
+                    f"\n\n💻 *[Jarvis de Emergencia - Offline Mode]*"
+                )
+
+            # Respuesta genérica local
+            return (
+                f"Lucho, reporte rápido local:<br>"
+                f"• Saldo Disponible: **${(income - total_gastado):,.2f}**<br>"
+                f"• Total Gastado: **${total_gastado:,.2f}** de **${income:,.2f}**<br><br>"
+                f"Preguntame cosas puntuales sobre luz, comida o nafta y te los calculo al toque."
+                f"\n\n💻 *[Jarvis de Emergencia - Offline Mode]*"
+            )
