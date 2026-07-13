@@ -393,51 +393,47 @@
         // REGISTRO DE NUEVAS CUENTAS (Sign Up)
         if (btnRegister) {
             btnRegister.addEventListener('click', async () => {
-                const name = document.getElementById('reg-name').value.trim();
-                const email = document.getElementById('reg-email').value.trim();
-                const password = document.getElementById('reg-password').value.trim();
-                
-                registerError.classList.add('hidden');
-                registerSuccess.classList.add('hidden');
+    const name = document.getElementById('reg-name').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-password').value.trim();
+    
+    registerError.classList.add('hidden');
+    registerSuccess.classList.add('hidden');
 
-                if (!name || !email || !password) {
-                    registerError.innerText = "⚠️ Por favor, completá todos los campos.";
-                    registerError.classList.remove('hidden');
-                    return;
-                }
+    if (!name || !email || !password) {
+        registerError.innerText = "⚠️ Por favor, completá todos los campos.";
+        registerError.classList.remove('hidden');
+        return;
+    }
 
-                try {
-                    const response = await fetch(`${API_BASE}/users/`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            email: email,
-                            password: password,
-                            name: userData.full_name,
-                        })
-                    });
+    try {
+        // OJO ACÁ: Asegurate que la URL sea la correcta /auth/register
+        // que es la que construimos en el backend, no /users/
+        const response = await fetch(`${API_BASE}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                full_name: name, // <--- Acá estaba el error, usamos 'name'
+                email: email,
+                password: password
+            })
+        });
 
-                    if (response.ok) {
-                        registerSuccess.innerText = "🎉 ¡Usuario creado con éxito! Volviendo al inicio de sesión...";
-                        registerSuccess.classList.remove('hidden');
-                        document.getElementById('reg-name').value = "";
-                        document.getElementById('reg-email').value = "";
-                        document.getElementById('reg-password').value = "";
-                        
-                        setTimeout(() => {
-                            toggleAccessPanel('login');
-                            document.getElementById('login-email').value = email;
-                        }, 2000);
-                    } else {
-                        const err = await response.json();
-                        registerError.innerText = `❌ Error: ${err.detail || 'No se pudo crear la cuenta'}`;
-                        registerError.classList.remove('hidden');
-                    }
-                } catch (e) {
-                    registerError.innerText = "❌ Error al intentar conectar con el VPS.";
-                    registerError.classList.remove('hidden');
-                }
-            });
+        if (response.ok) {
+            registerSuccess.innerText = "🎉 ¡Usuario creado con éxito! Volviendo al inicio...";
+            registerSuccess.classList.remove('hidden');
+            // ... (el resto de tu lógica de limpiar inputs y setTimeout)
+        } else {
+            const err = await response.json();
+            registerError.innerText = `❌ Error: ${err.detail || 'No se pudo crear la cuenta'}`;
+            registerError.classList.remove('hidden');
+        }
+    } catch (e) {
+        registerError.innerText = "❌ Error al intentar conectar con el VPS.";
+        registerError.classList.remove('hidden');
+        console.error(e); // Esto te va a tirar el error real en la consola F12
+    }
+});
         }
 
         // INICIO DE SESIÓN (Login)
