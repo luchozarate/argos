@@ -1,13 +1,14 @@
 from pydantic import BaseModel, EmailStr
 
-class UserBase(BaseModel):
-    username: str  # El formulario envía 'username', lo mapeamos aquí
+class UserCreate(BaseModel):
+    username: str  # El "usuario" (se guardará en la columna 'name')
+    email: EmailStr     # El "mail" (se guardará en la columna 'email')
+    password: str  # La "pass" (se guardará en la columna 'password')
 
-class UserCreate(UserBase):
-    password: str
-
-class UserResponse(UserBase):
+class UserResponse(BaseModel):
     id: int
+    username: str
+    email: EmailStr
 
     class Config:
         from_attributes = True

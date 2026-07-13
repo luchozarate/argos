@@ -4,22 +4,19 @@ from app.schemas.user import UserCreate
 
 class UserRepository:
     def get_by_email(self, db: Session, email: str):
-        """Busca un usuario por su email para verificar si ya existe."""
+        """Busca un usuario por su email real."""
         return db.query(User).filter(User.email == email).first()
 
     def authenticate(self, db: Session, email: str):
-        """Mantiene el método original que usa tu sistema de Login."""
+        """Mantiene el método original para el Login."""
         return db.query(User).filter(User.email == email).first()
 
     def create(self, db: Session, user_data: UserCreate, hashed_password: str):
-        """Crea y persiste un nuevo usuario en la base de datos."""
-        # Extraemos la parte anterior al '@' del correo y la hacemos Mayúscula inicial
-        friendly_name = user_data.username.split('@')[0].capitalize()
-
+        """Crea el usuario usando los datos reales del frontend."""
         db_user = User(
-            name=friendly_name,        # <--- ¡ESTA ES LA COLUMNA QUE POSTGRES EXIGÍA!
-            email=user_data.username,  # Mapeamos el 'username' al campo 'email'
-            password=hashed_password   # Guardamos la contraseña encriptada
+            name=user_data.username,  # Guardamos el "usuario" real en 'name'
+            email=user_data.email,     # Guardamos el "mail" real en 'email'
+            password=hashed_password   # Contraseña encriptada
         )
         db.add(db_user)
         db.commit()
