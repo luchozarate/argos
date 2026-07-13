@@ -133,7 +133,7 @@ class AIService:
         """
         try:
             response = self.client.models.generate_content(
-                model='gemini-2.0-flash', 
+                model='gemini-2.5-flash', 
                 contents=prompt,
                 config=types.GenerateContentConfig(response_mime_type="application/json"),
             )
@@ -181,11 +181,11 @@ class AIService:
         """
         try:
             response = self.client.models.generate_content(
-                model='gemini-2.0-flash', 
+                model='gemini-2.5-flash', 
                 contents=prompt,
             )
             # Firmamos con el Jarvis de Industrias Stark
-            return f"{response.text.strip()}\n\n🤖 *[Jarvis Real - Gemini 2.0]*"
+            return f"{response.text.strip()}\n\n🤖 *[Jarvis Real - Gemini 2.5]*"
             
         except Exception as e:
             # Logueamos el error de Google en la terminal para el SysAdmin
