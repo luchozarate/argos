@@ -10,3 +10,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def get_password_hash(password: str) -> str:
     """Genera un hash seguro a partir de una contraseña en texto plano (Registro)."""
     return pwd_context.hash(password)
+
+# ALIAS para que no rompa user_service.py que busca este nombre exacto
+hash_password = get_password_hash
