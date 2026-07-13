@@ -1,20 +1,12 @@
 from passlib.context import CryptContext
 
-pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto"
-)
+# Configuración del contexto de encriptación (BCRYPT)
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verifica si la contraseña ingresada coincide con el hash de la BD (Login)."""
+    return pwd_context.verify(plain_password, hashed_password)
 
-def hash_password(password: str) -> str:
+def get_password_hash(password: str) -> str:
+    """Genera un hash seguro a partir de una contraseña en texto plano (Registro)."""
     return pwd_context.hash(password)
-
-
-def verify_password(
-    plain_password: str,
-    hashed_password: str,
-) -> bool:
-    return pwd_context.verify(
-        plain_password,
-        hashed_password,
-    )
