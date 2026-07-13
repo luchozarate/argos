@@ -12,10 +12,10 @@ class UserRepository:
         return db.query(User).filter(User.email == email).first()
 
     def create(self, db: Session, user_data: UserCreate, hashed_password: str):
-        """Crea el usuario usando los datos reales del frontend."""
+        """Crea el usuario mapeando los campos del frontend real."""
         db_user = User(
-            name=user_data.username,  # Guardamos el "usuario" real en 'name'
-            email=user_data.email,     # Guardamos el "mail" real en 'email'
+            name=user_data.name,       # .name mapea a 'full_name' gracias al alias del schema
+            email=user_data.email,     # .email es el correo real enviado
             password=hashed_password   # Contraseña encriptada
         )
         db.add(db_user)
