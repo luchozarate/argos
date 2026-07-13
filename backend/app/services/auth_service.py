@@ -5,7 +5,6 @@ from app.repositories.user_repository import UserRepository
 from app.security.jwt import create_access_token
 from app.security.password import verify_password
 
-
 class AuthService:
 
     def __init__(self):
