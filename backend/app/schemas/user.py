@@ -1,14 +1,11 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 class UserCreate(BaseModel):
-    username: str  # El "usuario" (se guardará en la columna 'name')
-    email: EmailStr     # El "mail" (se guardará en la columna 'email')
-    password: str  # La "pass" (se guardará en la columna 'password')
-
-class UserResponse(BaseModel):
-    id: int
-    username: str
+    # El alias captura 'full_name' del formulario y lo mapea a 'name' en Python
+    name: str = Field(..., alias="full_name")  
     email: EmailStr
+    password: str
 
     class Config:
+        populate_by_name = True
         from_attributes = True
