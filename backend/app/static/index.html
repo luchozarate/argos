@@ -4,16 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ARGOS - Copiloto Financiero</title>
-    <!-- Tailwind CSS para diseño moderno -->
+    <!-- Tailwind CSS para diseño responsivo moderno -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- Chart.js para gráficos espectaculares -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-900 text-white font-sans antialiased min-h-screen flex flex-col justify-between">
 
-    <!-- 1. PANTALLA DE LOGIN -->
+    <!-- 1. PANTALLA DE ACCESO (LOGIN / REGISTRO) -->
     <div id="login-screen" class="flex-1 flex flex-col justify-center items-center p-6 max-w-sm mx-auto w-full">
-        <div class="w-full bg-gray-950 p-6 rounded-3xl border border-gray-800 shadow-2xl text-center">
+        <!-- Tarjeta de Login -->
+        <div id="panel-login" class="w-full bg-gray-950 p-6 rounded-3xl border border-gray-800 shadow-2xl text-center">
             <h1 class="text-4xl font-black tracking-wider text-cyan-400 mb-2">ARGOS 🤖</h1>
             <p class="text-gray-400 text-sm mb-6">Tu co-piloto financiero personal</p>
             
@@ -31,6 +32,39 @@
                 <button id="btn-login" class="w-full mt-2 bg-cyan-500 hover:bg-cyan-600 text-gray-950 font-bold py-3.5 px-4 rounded-xl transition duration-200 text-sm cursor-pointer shadow-lg shadow-cyan-500/20">
                     Iniciar Sesión
                 </button>
+                <p class="text-center text-xs text-gray-500 mt-2">
+                    ¿No tenés cuenta? <button onclick="toggleAccessPanel('register')" class="text-cyan-400 font-bold hover:underline cursor-pointer">Registrate acá</button>
+                </p>
+            </div>
+        </div>
+
+        <!-- Tarjeta de Registro (Sign Up) -->
+        <div id="panel-register" class="w-full bg-gray-950 p-6 rounded-3xl border border-gray-800 shadow-2xl text-center hidden">
+            <h1 class="text-4xl font-black tracking-wider text-cyan-400 mb-2">ARGOS 🤖</h1>
+            <p class="text-gray-400 text-sm mb-6">Crear cuenta de Administrador</p>
+            
+            <div id="register-error" class="hidden mb-4 p-3 bg-red-900/30 border border-red-700 text-red-400 text-xs rounded-xl"></div>
+            <div id="register-success" class="hidden mb-4 p-3 bg-green-900/30 border border-green-700 text-green-400 text-xs rounded-xl"></div>
+
+            <div class="flex flex-col gap-4 text-left">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Nombre Completo</label>
+                    <input type="text" id="reg-name" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:outline-none focus:border-cyan-500 text-white text-sm" placeholder="Lucho">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Email</label>
+                    <input type="email" id="reg-email" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:outline-none focus:border-cyan-500 text-white text-sm" placeholder="lucho@correo.com">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Contraseña</label>
+                    <input type="password" id="reg-password" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:outline-none focus:border-cyan-500 text-white text-sm" placeholder="••••••••">
+                </div>
+                <button id="btn-register" class="w-full mt-2 bg-green-500 hover:bg-green-600 text-gray-950 font-bold py-3.5 px-4 rounded-xl transition duration-200 text-sm cursor-pointer shadow-lg shadow-green-500/20">
+                    Registrarme
+                </button>
+                <p class="text-center text-xs text-gray-500 mt-2">
+                    ¿Ya tenés cuenta? <button onclick="toggleAccessPanel('login')" class="text-cyan-400 font-bold hover:underline cursor-pointer">Iniciá sesión</button>
+                </p>
             </div>
         </div>
     </div>
@@ -75,18 +109,61 @@
                     </div>
                 </div>
 
+                <!-- CONTROL DE SERVICIOS FIJOS (La Check-list que evita que la info se ensucie) -->
+                <div class="bg-gray-950 p-4 rounded-2xl border border-gray-800/80 shadow-md">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Control de Vencimientos</h3>
+                        <span class="text-[10px] bg-red-950/60 border border-red-900 text-red-300 px-2 py-0.5 rounded-full" id="pending-services-count">Pendientes: 0</span>
+                    </div>
+                    
+                    <!-- Checklist dinámico -->
+                    <div id="fixed-services-checklist" class="flex flex-col gap-2 mb-3">
+                        <p class="text-xs text-gray-500 italic">Cargando catálogo estático...</p>
+                    </div>
+
+                    <!-- Botón Acordeón para agregar servicio personalizado -->
+                    <div class="border-t border-gray-800/60 pt-3">
+                        <button onclick="toggleCustomServiceForm()" class="w-full flex justify-between items-center text-xs text-cyan-400 hover:text-cyan-300 font-semibold cursor-pointer">
+                            <span>➕ Agregar servicio personalizado</span>
+                            <span id="custom-service-arrow">▼</span>
+                        </button>
+                        <div id="custom-service-form" class="hidden mt-3 flex flex-col gap-2 p-3 bg-gray-900/60 rounded-xl border border-gray-800">
+                            <input type="text" id="cs-name" placeholder="Ej: Gimnasio, Seguro Auto" class="w-full p-2 bg-gray-950 border border-gray-700 rounded-lg text-xs text-white">
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="cs-day" placeholder="Día de vencimiento (1-31)" class="w-full p-2 bg-gray-950 border border-gray-700 rounded-lg text-xs text-white" min="1" max="31">
+                                <input type="number" id="cs-amount" placeholder="Importe estimado" class="w-full p-2 bg-gray-950 border border-gray-700 rounded-lg text-xs text-white">
+                            </div>
+                            <select id="cs-category" class="w-full p-2 bg-gray-950 border border-gray-700 rounded-lg text-xs text-white">
+                                <option value="Servicios">Servicios</option>
+                                <option value="Alquiler">Alquiler</option>
+                                <option value="Expensas">Expensas</option>
+                                <option value="Internet">Internet</option>
+                                <option value="Streaming">Streaming</option>
+                                <option value="Seguros">Seguros</option>
+                                <option value="Otros">Otros</option>
+                            </select>
+                            <button onclick="createCustomFixedService()" class="w-full mt-1 bg-cyan-500 hover:bg-cyan-600 text-gray-950 font-bold py-2 rounded-lg text-xs transition cursor-pointer">
+                                Guardar Servicio Fijo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- RECOMENDACIONES DE JARVIS -->
                 <div class="bg-gray-950/40 p-4 rounded-2xl border border-gray-800/80">
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Consejos de Jarvis</h3>
                     <div id="insights-container" class="flex flex-col gap-2">
-                        <p class="text-xs text-gray-500 italic">Cargando sugerencias financieras...</p>
+                        <p class="text-xs text-gray-500 italic">Cargando sugerencias...</p>
                     </div>
                 </div>
 
-                <!-- PANEL GRÁFICO (Diferenciador absoluto) -->
+                <!-- PANEL GRÁFICO INTERACTIVO -->
                 <div class="bg-gray-950 p-4 rounded-2xl border border-gray-800 shadow-md">
-                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Distribución de Gastos</h3>
-                    <div class="relative w-full h-48 flex justify-center items-center">
+                    <div class="flex justify-between items-center mb-1">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Distribución de Gastos</h3>
+                        <span class="text-[9px] text-cyan-400 italic">Clickeá una porción para filtrar</span>
+                    </div>
+                    <div class="relative w-full h-48 flex justify-center items-center mt-2">
                         <canvas id="categoryChart"></canvas>
                     </div>
                 </div>
@@ -94,7 +171,7 @@
                 <!-- CARGA RÁPIDA DE GASTOS -->
                 <div class="bg-gray-950 p-4 rounded-2xl border border-gray-800 shadow-xl">
                     <label class="block text-sm font-semibold text-gray-300 mb-2">Ingreso rápido por IA 🎙️</label>
-                    <textarea id="ai-input" rows="2" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:outline-none focus:border-cyan-500 text-white placeholder-gray-500 resize-none text-sm leading-relaxed" placeholder="Ej: compre carnes gaste 30 lucas..."></textarea>
+                    <textarea id="ai-input" rows="2" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:outline-none focus:border-cyan-500 text-white placeholder-gray-500 resize-none text-sm leading-relaxed" placeholder="Ej: Pague la boleta de la luz 28000..."></textarea>
                     <button id="btn-send" class="w-full mt-3 bg-cyan-500 hover:bg-cyan-600 text-gray-950 font-bold py-3 px-4 rounded-xl transition duration-200 flex justify-center items-center gap-2 text-sm cursor-pointer shadow-lg shadow-cyan-500/10">
                         <span>Registrar con IA</span>
                     </button>
@@ -103,14 +180,65 @@
                 </div>
             </div>
 
-            <!-- SECCIÓN 2: HISTORIAL COMPLETO -->
+            <!-- SECCIÓN 2: HISTORIAL FILTRABLE -->
             <div id="tab-history" class="tab-content hidden flex flex-col gap-4">
                 <div>
                     <h2 class="text-xl font-bold text-white">Historial de Gastos</h2>
-                    <p class="text-xs text-gray-400">Todos tus movimientos registrados</p>
+                    <p class="text-xs text-gray-400">Filtrado inteligente en tiempo real</p>
                 </div>
 
-                <!-- Lista Completa -->
+                <!-- Panel de Filtros -->
+                <div class="bg-gray-950 p-3 rounded-xl border border-gray-800 flex flex-col gap-2">
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-[9px] text-gray-400 uppercase font-bold mb-1">Categoría</label>
+                            <select id="hist-filter-category" onchange="applyHistoryFilters()" class="w-full p-2 bg-gray-900 border border-gray-700 rounded-lg text-xs text-white focus:outline-none focus:border-cyan-500">
+                                <option value="TODOS">Todas</option>
+                                <option value="Alquiler">Alquiler</option>
+                                <option value="Expensas">Expensas</option>
+                                <option value="Servicios">Servicios</option>
+                                <option value="Supermercado">Supermercado</option>
+                                <option value="Combustible">Combustible</option>
+                                <option value="Colegio">Colegio</option>
+                                <option value="Seguros">Seguros</option>
+                                <option value="Internet">Internet</option>
+                                <option value="Streaming">Streaming</option>
+                                <option value="Comida">Comida</option>
+                                <option value="Negocios">Negocios</option>
+                                <option value="Impuestos">Impuestos</option>
+                                <option value="Otros">Otros</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[9px] text-gray-400 uppercase font-bold mb-1">Mes</label>
+                            <select id="hist-filter-month" onchange="applyHistoryFilters()" class="w-full p-2 bg-gray-900 border border-gray-700 rounded-lg text-xs text-white focus:outline-none focus:border-cyan-500">
+                                <option value="TODOS">Todos</option>
+                                <option value="01">Enero</option>
+                                <option value="02">Febrero</option>
+                                <option value="03">Marzo</option>
+                                <option value="04">Abril</option>
+                                <option value="05">Mayo</option>
+                                <option value="06">Junio</option>
+                                <option value="07">Julio</option>
+                                <option value="08">Agosto</option>
+                                <option value="09">Septiembre</option>
+                                <option value="10">Octubre</option>
+                                <option value="11">Noviembre</option>
+                                <option value="12">Diciembre</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[9px] text-gray-400 uppercase font-bold mb-1">Año</label>
+                            <select id="hist-filter-year" onchange="applyHistoryFilters()" class="w-full p-2 bg-gray-900 border border-gray-700 rounded-lg text-xs text-white focus:outline-none focus:border-cyan-500">
+                                <option value="TODOS">Todos</option>
+                                <option value="2026">2026</option>
+                                <option value="2025">2025</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista Completa Filtrada -->
                 <div id="full-expenses-list" class="flex flex-col gap-2">
                     <p class="text-gray-500 text-sm italic text-center py-8">Cargando historial...</p>
                 </div>
@@ -120,19 +248,19 @@
             <div id="tab-chat" class="tab-content hidden flex flex-col h-[70vh] gap-3">
                 <div class="shrink-0">
                     <h2 class="text-xl font-bold text-white">Conversá con Jarvis 🧠</h2>
-                    <p class="text-xs text-gray-400">Preguntale sobre tus ahorros, recortes o deudas</p>
+                    <p class="text-xs text-gray-400">Preguntale sobre tus deudas o recortes del mes</p>
                 </div>
 
                 <!-- Ventana de Chat Scrolleable -->
                 <div id="chat-box" class="flex-1 bg-gray-950 rounded-2xl border border-gray-800 p-4 overflow-y-auto flex flex-col gap-3 min-h-[250px]">
                     <div class="bg-gray-800/40 border border-gray-700/50 p-3 rounded-2xl text-xs leading-relaxed max-w-[85%] self-start text-cyan-300">
-                        🤖 ¡Hola Lucho! Soy Jarvis, tu consultor financiero personal. Preguntame en qué se te fue la plata, dónde podés recortar o si llegás a fin de mes.
+                        🤖 ¡Hola Lucho! Soy Jarvis, tu consultor financiero personal. Preguntame si pagaste más de luz que el mes pasado, qué te falta pagar o en qué gastaste.
                     </div>
                 </div>
 
                 <!-- Entrada de Texto del Chat -->
                 <div class="flex gap-2 shrink-0">
-                    <input type="text" id="chat-input" class="flex-1 p-3 bg-gray-950 border border-gray-700 rounded-xl focus:outline-none focus:border-cyan-500 text-sm text-white placeholder-gray-500" placeholder="Ej: ¿en qué gasté más este mes?">
+                    <input type="text" id="chat-input" class="flex-1 p-3 bg-gray-950 border border-gray-700 rounded-xl focus:outline-none focus:border-cyan-500 text-sm text-white placeholder-gray-500" placeholder="Ej: ¿Qué me falta pagar?">
                     <button id="btn-chat-send" class="bg-cyan-500 hover:bg-cyan-600 text-gray-950 font-bold px-5 rounded-xl cursor-pointer text-sm">Preguntar</button>
                 </div>
             </div>
@@ -158,36 +286,75 @@
 
     <!-- LÓGICA DE CONTROL REACTIVA -->
     <script>
+        // API BASE DEL VPS EN PRODUCCIÓN
         const API_BASE = "http://103.195.101.213:8000"; 
         const WORKSPACE_ID = 1; 
 
-        // Elementos DOM
+        // Elementos DOM de Acceso
         const loginScreen = document.getElementById('login-screen');
         const appScreen = document.getElementById('app-screen');
+        const panelLogin = document.getElementById('panel-login');
+        const panelRegister = document.getElementById('panel-register');
+        
+        // Botones y Formularios
         const btnLogin = document.getElementById('btn-login');
+        const btnRegister = document.getElementById('btn-register');
         const btnLogout = document.getElementById('btn-logout');
         const loginError = document.getElementById('login-error');
+        const registerError = document.getElementById('register-error');
+        const registerSuccess = document.getElementById('register-success');
+        
+        // Elementos del Dashboard y Carga
         const btnSend = document.getElementById('btn-send');
         const aiInput = document.getElementById('ai-input');
         const statusBox = document.getElementById('status-box');
-        const expensesList = document.getElementById('expenses-list');
-        const fullExpensesList = document.getElementById('full-expenses-list');
         const insightsContainer = document.getElementById('insights-container');
+        const servicesChecklist = document.getElementById('fixed-services-checklist');
+        const pendingCountBadge = document.getElementById('pending-services-count');
+        const fullExpensesList = document.getElementById('full-expenses-list');
         
-        // Elementos de Chat
+        // Elementos del Chat
         const chatBox = document.getElementById('chat-box');
         const chatInput = document.getElementById('chat-input');
         const btnChatSend = document.getElementById('btn-chat-send');
 
-        // Referencia del Gráfico Global para poder destruirlo y recrearlo sin solapamientos
+        // Caché de gastos cargados para filtros rápidos asíncronos en JS
+        let loadedExpensesCache = [];
         let categoryChartInstance = null;
 
-        // Cambiador de Pestañas (SPA)
+        // Alternador visual Login <=> Registro
+        function toggleAccessPanel(target) {
+            loginError.classList.add('hidden');
+            registerError.classList.add('hidden');
+            registerSuccess.classList.add('hidden');
+            
+            if (target === 'register') {
+                panelLogin.classList.add('hidden');
+                panelRegister.classList.remove('hidden');
+            } else {
+                panelLogin.classList.remove('hidden');
+                panelRegister.classList.add('hidden');
+            }
+        }
+
+        // Toggle del Formulario de Servicios Fijos Personalizados
+        function toggleCustomServiceForm() {
+            const form = document.getElementById('custom-service-form');
+            const arrow = document.getElementById('custom-service-arrow');
+            if (form.classList.contains('hidden')) {
+                form.classList.remove('hidden');
+                arrow.innerText = "▲";
+            } else {
+                form.classList.add('hidden');
+                arrow.innerText = "▼";
+            }
+        }
+
+        // Cambiador de Pestañas (Single Page Application)
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(`tab-${tabName}`).classList.remove('hidden');
 
-            // Actualizar colores del menú inferior
             const navs = ['dashboard', 'history', 'chat'];
             navs.forEach(nav => {
                 const el = document.getElementById(`nav-${nav}`);
@@ -203,12 +370,13 @@
             if (tabName === 'dashboard') {
                 loadExpenses();
                 loadInsights();
+                loadFixedServices();
             } else if (tabName === 'history') {
                 loadHistory();
             }
         }
 
-        // Validador de sesión
+        // Validador de sesión persistida
         function checkAuth() {
             const token = localStorage.getItem('argos_token');
             if (token) {
@@ -221,7 +389,57 @@
             }
         }
 
-        // Login
+        // REGISTRO DE NUEVAS CUENTAS (Sign Up)
+        if (btnRegister) {
+            btnRegister.addEventListener('click', async () => {
+                const name = document.getElementById('reg-name').value.trim();
+                const email = document.getElementById('reg-email').value.trim();
+                const password = document.getElementById('reg-password').value.trim();
+                
+                registerError.classList.add('hidden');
+                registerSuccess.classList.add('hidden');
+
+                if (!name || !email || !password) {
+                    registerError.innerText = "⚠️ Por favor, completá todos los campos.";
+                    registerError.classList.remove('hidden');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${API_BASE}/users/`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: email,
+                            password: password,
+                            full_name: name
+                        })
+                    });
+
+                    if (response.ok) {
+                        registerSuccess.innerText = "🎉 ¡Usuario creado con éxito! Volviendo al inicio de sesión...";
+                        registerSuccess.classList.remove('hidden');
+                        document.getElementById('reg-name').value = "";
+                        document.getElementById('reg-email').value = "";
+                        document.getElementById('reg-password').value = "";
+                        
+                        setTimeout(() => {
+                            toggleAccessPanel('login');
+                            document.getElementById('login-email').value = email;
+                        }, 2000);
+                    } else {
+                        const err = await response.json();
+                        registerError.innerText = `❌ Error: ${err.detail || 'No se pudo crear la cuenta'}`;
+                        registerError.classList.remove('hidden');
+                    }
+                } catch (e) {
+                    registerError.innerText = "❌ Error al intentar conectar con el VPS.";
+                    registerError.classList.remove('hidden');
+                }
+            });
+        }
+
+        // INICIO DE SESIÓN (Login)
         if (btnLogin) {
             btnLogin.addEventListener('click', async () => {
                 const email = document.getElementById('login-email').value.trim();
@@ -256,7 +474,7 @@
             });
         }
 
-        // Logout
+        // CERRAR SESIÓN (Logout)
         if (btnLogout) {
             btnLogout.addEventListener('click', () => {
                 localStorage.removeItem('argos_token');
@@ -264,7 +482,7 @@
             });
         }
 
-        // Estados del banner de registro
+        // Feedback de carga visual para la IA
         function showStatus(text, type) {
             statusBox.className = "p-3 rounded-xl text-xs border mt-2 " + 
                 (type === 'loading' ? "bg-cyan-950/60 border-cyan-700 text-cyan-400" : 
@@ -274,7 +492,7 @@
             statusBox.classList.remove('hidden');
         }
 
-        // Registrar Gasto con IA
+        // REGISTRAR GASTO CON IA
         if (btnSend) {
             btnSend.addEventListener('click', async () => {
                 const text = aiInput.value.trim();
@@ -296,10 +514,11 @@
 
                     if (response.ok) {
                         const data = await response.json();
-                        showStatus(`✅ Guardado: ${data.description} por $${data.amount}`, "success");
+                        showStatus(`✅ Guardado: ${data.description} por $${parseFloat(data.amount).toLocaleString('es-AR')}`, "success");
                         aiInput.value = "";
                         await loadExpenses();
                         await loadInsights();
+                        await loadFixedServices();
                     } else {
                         const err = await response.json();
                         showStatus(`❌ Error: ${err.detail || 'No se pudo procesar'}`, "error");
@@ -312,7 +531,82 @@
             });
         }
 
-        // Cargar Datos, Métricas y Gráfico del Dashboard
+        // BULK SEEDING: Inicializador rápido de servicios para cuentas nuevas
+        async function bulkSeedServices() {
+            const token = localStorage.getItem('argos_token');
+            const defaults = [
+                { name: "Alquiler", due_day: 5, category: "Alquiler", default_amount: 350000.00, workspace_id: WORKSPACE_ID },
+                { name: "Expensas", due_day: 10, category: "Expensas", default_amount: 55000.00, workspace_id: WORKSPACE_ID },
+                { name: "Factura de Luz", due_day: 12, category: "Servicios", default_amount: 28000.00, workspace_id: WORKSPACE_ID },
+                { name: "Factura de Gas", due_day: 15, category: "Servicios", default_amount: 12000.00, workspace_id: WORKSPACE_ID },
+                { name: "Internet Wifi", due_day: 18, category: "Internet", default_amount: 18000.00, workspace_id: WORKSPACE_ID },
+                { name: "Suscripciones (Streaming)", due_day: 20, category: "Streaming", default_amount: 7500.00, workspace_id: WORKSPACE_ID }
+            ];
+
+            servicesChecklist.innerHTML = '<p class="text-xs text-cyan-400 italic py-2">Inicializando catálogo de Postgres...</p>';
+            
+            try {
+                for (const service of defaults) {
+                    await fetch(`${API_BASE}/fixed-services/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(service)
+                    });
+                }
+                await loadFixedServices();
+            } catch (e) {
+                console.error("Error al inicializar:", e);
+                servicesChecklist.innerHTML = '<p class="text-xs text-red-400">Error al inicializar fijos.</p>';
+            }
+        }
+
+        // CREAR SERVICIO FIJO MANUALLY (Customizado)
+        async function createCustomFixedService() {
+            const token = localStorage.getItem('argos_token');
+            const name = document.getElementById('cs-name').value.trim();
+            const due_day = parseInt(document.getElementById('cs-day').value);
+            const amount = parseFloat(document.getElementById('cs-amount').value);
+            const category = document.getElementById('cs-category').value;
+
+            if (!name || isNaN(due_day) || isNaN(amount)) {
+                alert("Por favor, completa todos los campos del servicio fijo.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/fixed-services/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        due_day: due_day,
+                        category: category,
+                        default_amount: amount,
+                        workspace_id: WORKSPACE_ID
+                    })
+                });
+
+                if (response.ok) {
+                    document.getElementById('cs-name').value = "";
+                    document.getElementById('cs-day').value = "";
+                    document.getElementById('cs-amount').value = "";
+                    toggleCustomServiceForm(); // Colapsar
+                    await loadFixedServices();
+                } else {
+                    alert("No se pudo crear el servicio.");
+                }
+            } catch (e) {
+                console.error("Error al registrar:", e);
+            }
+        }
+
+        // CARGAR DATOS Y MÉTRICAS DEL DASHBOARD
         async function loadExpenses() {
             const token = localStorage.getItem('argos_token');
             if (!token) return;
@@ -324,18 +618,16 @@
                 if (response.ok) {
                     const expenses = await response.json();
                     
-                    // Cálculo de totales dinámicos
                     const total = expenses && expenses.length > 0 
                         ? expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0) 
                         : 0;
                     
                     document.getElementById('dash-gastos').innerText = `$ ${total.toLocaleString('es-AR')}`;
                     
-                    const ingresos = 890000; // Hardcodeado para test
+                    const ingresos = 890000; // Hardcodeado para testeo
                     const saldo = ingresos - total;
                     document.getElementById('dash-saldo').innerText = `$ ${saldo.toLocaleString('es-AR')}`;
 
-                    // Renderizar el Gráfico Dinámico de Categorías usando Chart.js
                     renderChart(expenses);
                 }
             } catch (e) {
@@ -343,12 +635,80 @@
             }
         }
 
-        // Renderizar el Gráfico de Torta / Donut
+        // CARGAR CHECKLIST DE VENCIMIENTOS
+        async function loadFixedServices() {
+            const token = localStorage.getItem('argos_token');
+            if (!token || !servicesChecklist) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/fixed-services/workspace/${WORKSPACE_ID}/status`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const services = await response.json();
+                    let pendingCount = 0;
+
+                    // Si la cuenta es nueva y no tiene servicios configurados
+                    if (!services || services.length === 0) {
+                        servicesChecklist.innerHTML = `
+                            <div class="p-4 bg-gray-900/60 border border-dashed border-gray-700 rounded-2xl text-center flex flex-col items-center gap-2.5">
+                                <p class="text-xs text-gray-400 leading-relaxed">No tenés servicios fijos inicializados para tu cuenta en PostgreSQL.</p>
+                                <button onclick="bulkSeedServices()" class="bg-cyan-500 hover:bg-cyan-600 text-gray-950 text-xs font-bold py-2.5 px-4 rounded-xl transition duration-150 cursor-pointer shadow-md shadow-cyan-500/10">
+                                    🌱 Inicializar mis Servicios Fijos
+                                </button>
+                            </div>
+                        `;
+                        pendingCountBadge.innerText = `Pendientes: 0`;
+                        pendingCountBadge.className = "text-[10px] bg-green-950/60 border border-green-900 text-green-300 px-2 py-0.5 rounded-full";
+                        return;
+                    }
+
+                    servicesChecklist.innerHTML = services.map(s => {
+                        if (!s.is_paid) pendingCount++;
+
+                        const cardBg = s.is_paid ? "bg-green-950/20 border-green-900/40" : "bg-gray-900 border-gray-800";
+                        const textStyle = s.is_paid ? "line-through text-gray-500" : "text-white";
+                        const badgeColor = s.is_paid ? "bg-green-900/40 text-green-300 border-green-700/50" : "bg-red-900/40 text-red-300 border-red-700/50";
+                        const badgeText = s.is_paid ? `Pagado el ${s.paid_date.slice(8,10)}/${s.paid_date.slice(5,7)}` : `Vence el ${s.due_day}`;
+
+                        return `
+                            <div class="p-3 rounded-xl border flex justify-between items-center transition duration-200 ${cardBg}">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-5 h-5 rounded-full flex justify-center items-center border ${s.is_paid ? 'bg-green-500 border-green-400 text-gray-950' : 'border-gray-600 bg-gray-800'}">
+                                        ${s.is_paid ? '✓' : ''}
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-xs ${textStyle}">${s.name}</p>
+                                        <span class="text-[9px] text-gray-400 bg-gray-800/80 px-1.5 py-0.5 rounded-md border border-gray-700/60">${s.category}</span>
+                                    </div>
+                                </div>
+                                <div class="text-right flex flex-col items-end gap-1">
+                                    <p class="font-extrabold text-xs text-gray-100">$ ${(s.is_paid ? s.paid_amount : s.default_amount).toLocaleString('es-AR')}</p>
+                                    <span class="text-[9px] px-2 py-0.5 rounded-full border ${badgeColor}">
+                                        ${badgeText}
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    pendingCountBadge.innerText = `Pendientes: ${pendingCount}`;
+                    if (pendingCount > 0) {
+                        pendingCountBadge.className = "text-[10px] bg-red-950/60 border border-red-900 text-red-300 px-2 py-0.5 rounded-full font-bold animate-pulse";
+                    } else {
+                        pendingCountBadge.className = "text-[10px] bg-green-950/60 border border-green-900 text-green-300 px-2 py-0.5 rounded-full font-medium";
+                    }
+                }
+            } catch (e) {
+                console.error("Error cargando servicios fijos:", e);
+            }
+        }
+
+        // RENDER DE GRÁFICO DE DONA (Interactive Chart.js)
         function renderChart(expenses) {
             const ctx = document.getElementById('categoryChart');
             if (!ctx) return;
 
-            // Agrupar gastos por categoría
             const grouped = {};
             expenses.forEach(e => {
                 grouped[e.category] = (grouped[e.category] || 0) + parseFloat(e.amount);
@@ -357,13 +717,11 @@
             const labels = Object.keys(grouped);
             const data = Object.values(grouped);
 
-            // Destruir instancia anterior para evitar colisiones
             if (categoryChartInstance) {
                 categoryChartInstance.destroy();
             }
 
             if (labels.length === 0) {
-                // Si no hay datos, mostramos un gráfico de "vacío"
                 categoryChartInstance = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
@@ -382,7 +740,6 @@
                 return;
             }
 
-            // Crear el gráfico dinámico real
             categoryChartInstance = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
@@ -400,6 +757,21 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    // ACCIÓN DEL GRÁFICO: Clickeá la dona y te filtra el historial
+                    onClick: (event, activeElements, chart) => {
+                        if (activeElements && activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            const categoryName = chart.data.labels[index];
+                            
+                            // Seleccionamos la categoría clickeada en el filtro de historial
+                            const histFilter = document.getElementById('hist-filter-category');
+                            if (histFilter) {
+                                histFilter.value = categoryName;
+                            }
+                            // Pasamos al historial automáticamente
+                            switchTab('history');
+                        }
+                    },
                     plugins: {
                         legend: {
                             position: 'right',
@@ -414,7 +786,84 @@
             });
         }
 
-        // Cargar Consejos Breves de Jarvis
+        // CARGAR HISTORIAL DESDE EL VPS (Con almacenamiento en Caché local)
+        async function loadHistory() {
+            const token = localStorage.getItem('argos_token');
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/expenses/workspace/${WORKSPACE_ID}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const expenses = await response.json();
+                    // Almacenamos en caché para los filtros asíncronos rápidos
+                    loadedExpensesCache = expenses || [];
+                    applyHistoryFilters(); // Renderiza aplicando los selectores
+                }
+            } catch (e) {
+                console.error("Error cargando historial completo:", e);
+                fullExpensesList.innerHTML = '<p class="text-red-400 text-center text-xs py-8">❌ Error al conectar con el servidor.</p>';
+            }
+        }
+
+        // APLICAR FILTROS DEL HISTORIAL EN CALIENTE (Sin latencia de red)
+        function applyHistoryFilters() {
+            const categoryFilter = document.getElementById('hist-filter-category').value;
+            const monthFilter = document.getElementById('hist-filter-month').value;
+            const yearFilter = document.getElementById('hist-filter-year').value;
+
+            // Filtramos la caché de gastos
+            const filtered = loadedExpensesCache.filter(exp => {
+                // Filtro Categoría
+                const matchCategory = (categoryFilter === 'TODOS' || exp.category === categoryFilter);
+                
+                // Extraer mes y año de YYYY-MM-DD
+                const dateParts = exp.expense_date.split('-'); // [YYYY, MM, DD]
+                const expYear = dateParts[0];
+                const expMonth = dateParts[1];
+
+                const matchMonth = (monthFilter === 'TODOS' || expMonth === monthFilter);
+                const matchYear = (yearFilter === 'TODOS' || expYear === yearFilter);
+
+                return matchCategory && matchMonth && matchYear;
+            });
+
+            // Renderizar el resultado filtrado
+            if (filtered.length === 0) {
+                fullExpensesList.innerHTML = `
+                    <div class="p-12 text-center">
+                        <p class="text-gray-500 text-sm italic">No se encontraron gastos para el filtro aplicado.</p>
+                        <button onclick="resetFilters()" class="text-xs text-cyan-400 font-semibold mt-2 hover:underline cursor-pointer">Reestablecer filtros</button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Muestra los ítems con el orden invertido para ver el más nuevo arriba
+            fullExpensesList.innerHTML = [...filtered].reverse().map(exp => `
+                <div class="bg-gray-950 p-3.5 rounded-xl border border-gray-800 flex justify-between items-center shadow-sm">
+                    <div>
+                        <p class="font-bold text-white text-sm">${exp.description}</p>
+                        <span class="text-[10px] text-gray-400 bg-gray-900 px-2.5 py-0.5 rounded-full border border-gray-800">${exp.category}</span>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-black text-cyan-400 text-sm">$ ${parseFloat(exp.amount).toLocaleString('es-AR')}</p>
+                        <p class="text-[9px] text-gray-500 mt-1">${exp.expense_date}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Limpieza de filtros
+        function resetFilters() {
+            document.getElementById('hist-filter-category').value = 'TODOS';
+            document.getElementById('hist-filter-month').value = 'TODOS';
+            document.getElementById('hist-filter-year').value = 'TODOS';
+            applyHistoryFilters();
+        }
+
+        // CARGAR CONSEJOS DE JARVIS
         async function loadInsights() {
             const token = localStorage.getItem('argos_token');
             if (!token || !insightsContainer) return;
@@ -447,50 +896,14 @@
             }
         }
 
-        // Cargar Historial Completo (Sección 2)
-        async function loadHistory() {
-            const token = localStorage.getItem('argos_token');
-            if (!token) return;
-
-            try {
-                const response = await fetch(`${API_BASE}/expenses/workspace/${WORKSPACE_ID}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (response.ok) {
-                    const expenses = await response.json();
-                    if (!expenses || expenses.length === 0) {
-                        fullExpensesList.innerHTML = '<p class="text-gray-500 text-sm italic text-center py-12">No hay gastos registrados en este workspace.</p>';
-                        return;
-                    }
-
-                    fullExpensesList.innerHTML = expenses.reverse().map(exp => `
-                        <div class="bg-gray-950 p-3.5 rounded-xl border border-gray-800 flex justify-between items-center shadow-sm">
-                            <div>
-                                <p class="font-bold text-white text-sm">${exp.description}</p>
-                                <span class="text-[10px] text-gray-400 bg-gray-900 px-2.5 py-0.5 rounded-full border border-gray-800">${exp.category}</span>
-                            </div>
-                            <div class="text-right">
-                                <p class="font-black text-cyan-400 text-sm">$${parseFloat(exp.amount).toLocaleString('es-AR')}</p>
-                                <p class="text-[9px] text-gray-500 mt-1">${exp.expense_date}</p>
-                            </div>
-                        </div>
-                    `).join('');
-                }
-            } catch (e) {
-                console.error("Error cargando historial completo:", e);
-            }
-        }
-
-        // Interacción conversacional con Jarvis (Sección 3)
+        // INTERACCIÓN CON EL CHAT DE JARVIS
         async function sendChatMessage() {
             const text = chatInput.value.trim();
             if (!text) return;
 
-            // Añadir mensaje del usuario en pantalla
             appendBubble(text, 'user');
             chatInput.value = "";
 
-            // Añadir burbuja de carga/pensando
             const loadingId = appendBubble("Jarvis está analizando los números... 🧠", "loading");
 
             const token = localStorage.getItem('argos_token');
@@ -504,7 +917,6 @@
                     body: JSON.stringify({ text: text })
                 });
 
-                // Quitar burbuja de carga
                 document.getElementById(loadingId)?.remove();
 
                 if (response.ok) {
@@ -519,7 +931,7 @@
             }
         }
 
-        // Imprimir burbujas en el chat
+        // Inyección de burbujas en la interfaz del chat
         function appendBubble(text, sender) {
             const id = 'bubble_' + Math.random().toString(36).substring(2, 9);
             let bubbleClass = "";
@@ -538,20 +950,20 @@
             wrapper.id = id;
             wrapper.className = `flex w-full ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
             
-            // Reemplazar saltos de línea por <br> y markdown simple (negrita)
+            // Reemplazo básico de markdown para legibilidad en JS
             const formattedText = text
                 .replace(/\n/g, '<br>')
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>');
 
             wrapper.innerHTML = `<div class="${bubbleClass}">${formattedText}</div>`;
             chatBox.appendChild(wrapper);
             
-            // Auto scroll abajo de todo
             chatBox.scrollTop = chatBox.scrollHeight;
             return id;
         }
 
-        // Listener de Enter para el Chat
+        // Listeners de teclado
         if (chatInput) {
             chatInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') sendChatMessage();
@@ -561,7 +973,7 @@
             btnChatSend.addEventListener('click', sendChatMessage);
         }
 
-        // Inicio automático de la App
+        // Ejecución inmediata al cargar
         checkAuth();
     </script>
 </body>
