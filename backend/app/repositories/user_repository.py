@@ -13,9 +13,13 @@ class UserRepository:
 
     def create(self, db: Session, user_data: UserCreate, hashed_password: str):
         """Crea y persiste un nuevo usuario en la base de datos."""
+        # Extraemos la parte anterior al '@' del correo y la hacemos Mayúscula inicial
+        friendly_name = user_data.username.split('@')[0].capitalize()
+
         db_user = User(
-            email=user_data.username,  # Mapeamos el 'username' del formulario al campo 'email'
-            password=hashed_password   # Guardamos la contraseña ya encriptada
+            name=friendly_name,        # <--- ¡ESTA ES LA COLUMNA QUE POSTGRES EXIGÍA!
+            email=user_data.username,  # Mapeamos el 'username' al campo 'email'
+            password=hashed_password   # Guardamos la contraseña encriptada
         )
         db.add(db_user)
         db.commit()
