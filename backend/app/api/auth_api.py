@@ -1,31 +1,42 @@
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from fastapi import HTTPException, status
+from app.models.user import User
+from app.schemas.user import UserCreate
+from passlib.context import CryptContext
 
-from app.database.database import get_db
-from app.schemas.auth import TokenResponse
-from app.services.auth_service import AuthService
+# Contexto para hashear contraseñas
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["Authentication"],
-)
+class AuthService:
+    def login(self, db: Session, email: str, password: str):
+        # Lógica existente de login...
+        pass
 
-service = AuthService()
+    def register_user(self, db: Session, user: UserCreate):
+        """
+        Registra un nuevo usuario en la base de datos.
+        """
+        # 1. Verificar si el usuario ya existe
+        existing_user = db.query(User).filter(User.email == user.email).first()
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El email ya está registrado"
+            )
 
+        # 2. Hashear la contraseña
+        hashed_password = pwd_context.hash(user.password)
 
-@router.post(
-    "/login",
-    response_model=TokenResponse,
-)
-def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db),
-):
+        # 3. Crear el objeto usuario
+        new_user = User(
+            email=user.email,
+            password=hashed_password,
+            # Añade otros campos según tu modelo
+        )
 
-    return service.login(
-        db=db,
-        email=form_data.username,
-        password=form_data.password,
-    )
+        # 4. Guardar en BD
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+
+        return {"message": "Usuario registrado con éxito", "user_id": new_user.id}
