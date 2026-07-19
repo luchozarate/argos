@@ -7,6 +7,7 @@ from app.schemas.user import UserCreate
 from app.security.auth import get_current_user
 from app.services.user_service import UserService
 from app.models.user import User
+from app.models.workspace_member import WorkspaceMember
 
 router = APIRouter(
     prefix="/users",
@@ -46,3 +47,17 @@ def me(
         "name": current_user.name,
         "email": current_user.email,
     }
+  
+@router.get("/me/workspaces")
+def get_my_workspaces(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Devuelve los espacios de trabajo a los que pertenece el usuario logueado"""
+    memberships = db.query(WorkspaceMember).filter(WorkspaceMember.user_id == current_user.id).all()
+    
+    if not memberships:
+        raise HTTPException(status_code=404, detail="No tienes ningún Workspace asignado")
+        
+    # Devolvemos el primero por defecto (el que creamos al registrarlo)
+    return {"workspace_id": memberships.workspace_id}
