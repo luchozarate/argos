@@ -37,7 +37,6 @@ class AuthService:
         # 2. Encriptar contraseña y crear Usuario
         hashed_password = get_password_hash(user_data.password)
         
-        # OJO: dependiento de cómo armaste tu UserCreate, usamos .name
         new_user = self.repository.create_user_model(
             name=user_data.name, 
             email=user_data.email, 
@@ -47,7 +46,8 @@ class AuthService:
         db.flush() # Guardamos temporalmente para obtener el ID del usuario
 
         # 3. AUTO-CREAR EL WORKSPACE (PERFIL) DEL USUARIO
-        new_workspace = Workspace(name=f"Personal de {new_user.name}")
+        # ¡CORRECCIÓN AQUÍ! Le pasamos el owner_id explícitamente
+        new_workspace = Workspace(name=f"Personal de {new_user.name}", owner_id=new_user.id)
         db.add(new_workspace)
         db.flush() # Guardamos para obtener el ID del workspace
 
