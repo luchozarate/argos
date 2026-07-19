@@ -289,7 +289,7 @@
         // API BASE DEL VPS EN PRODUCCIÓN
         //const API_BASE = "http://103.195.101.213:8000";
 		const API_BASE = window.location.origin;
-        const WORKSPACE_ID = 1; 
+        let WORKSPACE_ID = localStorage.getItem('argos_workspace_id') || 1;
 
         // Elementos DOM de Acceso
         const loginScreen = document.getElementById('login-screen');
@@ -456,20 +456,39 @@
                     });
 
                     if (response.ok) {
-                        const data = await response.json();
-                        localStorage.setItem('argos_token', data.access_token);
-                        checkAuth();
-                    } else {
-                        const err = await response.json();
-                        loginError.innerText = `Error: ${err.detail || 'Credenciales inválidas'}`;
-                        loginError.classList.remove('hidden');
+                    const data = await response.json();
+                    // 1. Guardamos el token de seguridad
+                    localStorage.setItem('argos_token', data.access_token);
+                    
+                    // 2. --- NUEVO: BUSCAR MI WORKSPACE PRIVADO ---
+                    try {
+                        const wsRes = await fetch(`${API_BASE}/users/me/workspaces`, {
+                            headers: { 'Authorization': `Bearer ${data.access_token}` }
+                        });
+                        if (wsRes.ok) {
+                            const wsData = await wsRes.json();
+                            // Guardamos el ID privado en el navegador y en la variable global
+                            localStorage.setItem('argos_workspace_id', wsData.workspace_id);
+                            WORKSPACE_ID = wsData.workspace_id;
+                        }
+                    } catch (wsError) {
+                        console.error("Error aislando el workspace:", wsError);
                     }
-                } catch (e) {
-                    loginError.innerText = "❌ Error de conexión con el VPS";
+                    // ---------------------------------------------
+
+                    // 3. Pasamos al dashboard
+                    checkAuth();
+                } else {
+                    const err = await response.json();
+                    loginError.innerText = `Error: ${err.detail || 'Credenciales inválidas'}`;
                     loginError.classList.remove('hidden');
                 }
-            });
-        }
+            } catch (e) {
+                loginError.innerText = "❌ Error de conexión con el VPS";
+                loginError.classList.remove('hidden');
+            }
+        });
+    }
 
         // CERRAR SESIÓN (Logout)
         if (btnLogout) {
