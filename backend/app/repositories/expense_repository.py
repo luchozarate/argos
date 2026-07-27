@@ -10,8 +10,10 @@ class ExpenseRepository:
             category=expense_in.category,
             amount=expense_in.amount,
             expense_date=expense_in.expense_date,
-            fixed_service_id=expense_in.fixed_service_id  # ¡Agregado para que lo guarde en la BD!
+            # getattr evita crasheos si el esquema llega a estar desactualizado
+            fixed_service_id=getattr(expense_in, 'fixed_service_id', None) 
         )
         db.add(db_expense)
-        db.flush()  # Para obtener el ID antes del commit definitivo
+        db.commit()           # ¡EL COMANDO QUE FALTABA!
+        db.refresh(db_expense) # ¡PARA RECUPERAR LA FECHA EXACTA!
         return db_expense

@@ -8,7 +8,7 @@ class ExpenseBase(BaseModel):
     category: str
     amount: Decimal
     expense_date: date
-    fixed_service_id: Optional[int] = None  # ¡Agregado para que no se pierda el ID del fijo!
+    fixed_service_id: Optional[int] = None
 
 class ExpenseCreate(ExpenseBase):
     pass
