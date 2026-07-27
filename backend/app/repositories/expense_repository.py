@@ -9,11 +9,9 @@ class ExpenseRepository:
             description=expense_in.description,
             category=expense_in.category,
             amount=expense_in.amount,
-            expense_date=expense_in.expense_date
+            expense_date=expense_in.expense_date,
+            fixed_service_id=expense_in.fixed_service_id  # ¡Agregado para que lo guarde en la BD!
         )
         db.add(db_expense)
         db.flush()  # Para obtener el ID antes del commit definitivo
         return db_expense
-
-    def get_by_workspace(self, db: Session, workspace_id: int, limit: int = 100):
-        return db.query(Expense).filter(Expense.workspace_id == workspace_id).limit(limit).all()
